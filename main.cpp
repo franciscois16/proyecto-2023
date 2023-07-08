@@ -1,11 +1,14 @@
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
 #include <cstdio>
 #include<cmath>
 #define maxfilas 30
 #define maxcolumnas 20
 #define paso 1
+#define tiradores 3
 
 struct perso
 {
@@ -15,12 +18,26 @@ struct perso
     
 };
 
+struct dispara
+{
 
-void cargarmapaarchivo(struct perso* jugador);
+	int dibposx;
+    int dibposy;
+	int posx;
+	int posy;
+	int activado;
+		
+};
+
+
+void cargarmapaarchivo(struct perso* jugador,struct dispara* bala);
 void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font);
 void dibujarpersonaje(ALLEGRO_BITMAP* personaje,struct perso jugador);
 void moverpersonaje(struct perso* jugador);
 void acciones(struct perso* jugador,int* inercia,int* agarre);
+void diparabala(struct dispara* balas,ALLEGRO_BITMAP* bala);
+int moverCamara(int personaje_y, int camara_y);
+void dibujabala(struct dispara* balas, ALLEGRO_BITMAP* bala);
 
 const int SCREEN_WIDTH = 30*30;
 const int SCREEN_HEIGHT = 20*30;
@@ -32,7 +49,14 @@ int agarre = 0;
 char mapa1[maxcolumnas][maxfilas];
 int main()
 {
+    int retardo = 0;
+    int personaje_y = 0; 
+    int camara_y = 0; 
+
     al_init();
+    al_install_audio();
+    al_init_acodec_addon();
+    al_init_font_addon();
     al_install_keyboard();
 
     ALLEGRO_TIMER *timer = al_create_timer(1.0 / 1.0);//este es para que decir cada cuanto queremos que se haga una accion = a fps aqui son 30 cada seg
@@ -55,7 +79,10 @@ int main()
     ALLEGRO_BITMAP* escalera = al_load_bitmap("imagenes/escalera.bmp");
     ALLEGRO_BITMAP* trampabmp = al_load_bitmap("imagenes/trampa.png");
     ALLEGRO_BITMAP* personaje = al_load_bitmap("imagenes/enemigo.png");
+    ALLEGRO_BITMAP* bala = al_load_bitmap("imagenes/pedribala.jpg");
+    //ALLEGRO_SAMPLE *salto = al_load_sample("imagenes/salto.wav");
 
+    al_reserve_samples(1);
 
     if (!imagen) {
         fprintf(stderr, "Error al cargar la imagen.\n");
@@ -70,12 +97,16 @@ int main()
 
     
     struct perso jugador;
+    struct dispara balas[5]; 
+    
+    
     
     
     while (jugador.vidas > 1)
     {
+        al_start_timer(timer);
         al_wait_for_event(queue, &event);
-
+         printf("%d vidas" , jugador.vidas);
         if (event.type == ALLEGRO_EVENT_TIMER)
             redraw = true;
         else if ((event.type == ALLEGRO_EVENT_KEY_DOWN) || (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE))
@@ -85,15 +116,8 @@ int main()
         {
             al_clear_to_color(al_map_rgb(0, 0, 0));
 
-            // posX += velX;
-           // posY += velY;
-
-            //if (posX < 0 || posX + al_get_bitmap_width(imagen) > SCREEN_WIDTH)
-            //velX = -velX;
-            //if (posY < 0 || posY + al_get_bitmap_height(imagen) > SCREEN_HEIGHT)
-            //velY = -velY;
-            // 
-            cargarmapaarchivo(&jugador);
+           
+            cargarmapaarchivo(&jugador ,balas);
             ALLEGRO_KEYBOARD_STATE keyboard_state;
 
             do {
@@ -106,10 +130,18 @@ int main()
                 al_draw_bitmap(imagen, posX, posY, 0);
                 dibujamapa(ladrillo, escalera, trampabmp,font);
                 dibujarpersonaje(personaje,jugador);
-                acciones(&jugador, &inercia,&agarre);
-                moverpersonaje(&jugador);
+                moverCamara(jugador.posy,camara_y);
+                dibujabala(balas, bala);
+                if (retardo==0)
+                {
+                    
+                    acciones(&jugador, &inercia,&agarre);
+                    moverpersonaje(&jugador);
+                    diparabala(balas,bala);
+                }
+                retardo=(retardo+1)%2;
                 al_flip_display(); 
-            } while (true);
+            } while (jugador.vidas > 1);
 
 
            
@@ -127,6 +159,7 @@ int main()
     al_destroy_bitmap(escalera);
     al_destroy_bitmap(trampabmp);
     al_destroy_bitmap(personaje);
+   // al_destroy_sample(salto);
 
 
     return 0;
@@ -135,9 +168,9 @@ int main()
 
 
 
-void cargarmapaarchivo(struct perso* jugador)
-{
+void cargarmapaarchivo(struct perso* jugador, struct dispara* balas) {
     ALLEGRO_FILE* mapa = al_fopen("mapa.txt", "r");
+    int z = 0;
 
     if (mapa == NULL) {
         printf("Error al abrir el archivo.\n");
@@ -150,10 +183,21 @@ void cargarmapaarchivo(struct perso* jugador)
         for (j = 0; j < maxfilas; j++) {
             leido = al_fgetc(mapa);
             mapa1[j][i] = leido;
-            if (mapa1[j][i] == 'p')
-            {
+            if (mapa1[j][i] == 'p') {
                 jugador->posx = j * 30;
                 jugador->posy = i * 30;
+            }
+
+            if (mapa1[j][i] == 't') {
+                balas[z].dibposx = j * 30;
+                balas[z].dibposy = i * 30;
+                balas[z].activado = 1;
+
+                printf("\nestex : %d", balas[z].dibposx);
+                printf("\nestey : %d", balas[z].dibposy);
+                printf("\nestez : %d", z);
+
+                z++;
             }
         }
         leido = al_fgetc(mapa); // Saltar al siguiente carácter de nueva línea
@@ -208,7 +252,7 @@ void moverpersonaje(struct perso* jugador) {
         //float nuevaPosY = jugador->posy;
 
         if (al_key_down(&keyboard_state, ALLEGRO_KEY_RIGHT)) {
-        if(mapa1[(jugador->posx+30)/30][((jugador->posy)/30)]!='x'){
+        if(mapa1[(jugador->posx+30)/30][((jugador->posy)/30)]!='x' && mapa1[(jugador->posx+30)/30][(jugador->posy+29)/30]!='x'){
 
             jugador->posx += paso;
             }
@@ -217,7 +261,7 @@ void moverpersonaje(struct perso* jugador) {
         }
 
         if (al_key_down(&keyboard_state, ALLEGRO_KEY_LEFT)) {
-            if(mapa1[(jugador->posx)/30][(jugador->posy)/30]!='x'){
+            if(mapa1[(jugador->posx)/30][(jugador->posy)/30]!='x' && mapa1[(jugador->posx)/30][(jugador->posy+29)/30]!='x'){
             jugador->posx -= paso;
             }
         }
@@ -242,6 +286,7 @@ void acciones(struct perso* jugador, int* inercia, int* agarre) {
     ALLEGRO_KEYBOARD_STATE keyboard_state;
     al_get_keyboard_state(&keyboard_state);
     int direccion = 3;
+    
 
     // Verificar si se presiona la tecla de flecha derecha y si hay una pared en esa dirección
     if (al_key_down(&keyboard_state, ALLEGRO_KEY_RIGHT)) {
@@ -296,9 +341,11 @@ void acciones(struct perso* jugador, int* inercia, int* agarre) {
     }
 
     // Aplicar inercia hacia arriba si se presiona la tecla de espacio y hay agarre en una pared
-   if (al_key_down(&keyboard_state, ALLEGRO_KEY_SPACE) && mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] == 'x' && *agarre == 0  || *agarre == 1) {
+    if (al_key_down(&keyboard_state, ALLEGRO_KEY_SPACE) && mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] == 'x' && *agarre == 0 || *agarre == 1) {
         *inercia = 400;
+       //al_play_sample(salto, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
     }
+
 
     if (al_key_down(&keyboard_state, ALLEGRO_KEY_RIGHT) && mapa1[(jugador->posx+30) / 30][(jugador->posy) / 30] == 'x' && *agarre == 1 && mapa1[(jugador->posx+30) / 30][(jugador->posy-30) / 30] == 'x' ) {
         if (al_key_down(&keyboard_state, ALLEGRO_KEY_SPACE) && direccion !=2)
@@ -332,77 +379,63 @@ void acciones(struct perso* jugador, int* inercia, int* agarre) {
 
     if(mapa1[jugador->posx/30][(jugador->posy)/30] == 't')
     {
-        jugador->vidas -= 1;
-        printf("%d vidas" , jugador->vidas);
+        jugador->vidas = jugador->vidas - 1;
+       printf("%d vidas" , jugador->vidas);
         jugador->posx -= 30;
     }
 
+     // al_destroy_sample(salto);
+}
 
+
+int moverCamara(int personaje_y, int camara_y) {
+    int camara_nueva_y = camara_y;
+
+    if (personaje_y > SCREEN_HEIGHT - 150) {
+        camara_nueva_y = personaje_y - (SCREEN_HEIGHT - 150);
+    }
+
+    return camara_nueva_y;
 }
 
 
 
-
-
-/*
-
-    if (al_key_down(&keyboard_state, ALLEGRO_KEY_LEFT)) {
-        int nuevaPosi = (int)(nuevaPosY / 30);
-        int nuevaPosj = (int)(nuevaPosX / 30);
-
-        if (nuevaPosj - 1 >= 0 && mapa1[nuevaPosj - 1][nuevaPosi] == 'x') {
-            // No se mueve hacia la izquierda si hay una 'x' delante
+void diparabala(struct dispara* balas, ALLEGRO_BITMAP* bala) {
+    int i;
+    for (i = 0; i < tiradores; i++) {
+        if (balas[i].activado == 1) {
+            balas[i].activado = 0;
+            balas[i].posx = balas[i].dibposx ;
+            balas[i].posy = balas[i].dibposy - 30;
         } else {
-            nuevaPosX -= 0.5;
-        }
-    }
+            balas[i].posy -= 1;
 
-    if (al_key_down(&keyboard_state, ALLEGRO_KEY_UP)) {
-        int nuevaPosi = (int)(nuevaPosY / 30);
-        int nuevaPosj = (int)(nuevaPosX / 30);
-
-        if (nuevaPosi - 1 >= 0 && mapa1[nuevaPosj][nuevaPosi - 1] == 'x') {
-            // No se mueve hacia arriba si hay una 'x' delante
-        } else {
-            nuevaPosY -= 0.5;
-        }
-    }
-
-    if (al_key_down(&keyboard_state, ALLEGRO_KEY_DOWN)) {
-        int nuevaPosi = (int)(nuevaPosY / 30);
-        int nuevaPosj = (int)(nuevaPosX / 30);
-
-        if (nuevaPosi + 1 < maxfilas && mapa1[nuevaPosj][nuevaPosi + 1] == 'x') {
-            // No se mueve hacia abajo si hay una 'x' delante
-        } else {
-            nuevaPosY += 0.5;
-        }
-    }
-
-    // Actualizar la posición del jugador si no hay obstáculos
-    jugador->posx = nuevaPosX;
-    jugador->posy = nuevaPosY;
-
-
-*/
-   /*esto lo debo probar
-   
-    if (mapa1[jugador->posx / 30][(jugador->posy) / 30] == 'o' && *inercia == 0 && *agarre == 1  &&  al_key_down(&keyboard_state, ALLEGRO_KEY_SPACE ) ){
-        
-        if (mapa1[(jugador->posx+30) / 30][(jugador->posy) / 30] == 'x')
-        {
-           *inercia = 200;
-            jugador->posx + 30;
-            
-        }
-        
-        else{
-
-            *inercia = 200;
-            jugador->posx + 30;
+            // Verificar si hay una 'x' en los próximos 30 píxeles en la dirección de avance
             
 
+            if (mapa1[balas[i].posx / 30][(balas[i].posy / 30) - 1] == 'x') {
+                balas[i].activado = 1;
+            }
+
+            //al_draw_bitmap(bala, balas[i].posx, balas[i].posy, 0);
         }
-        
-    
-    }*/
+    }
+}
+
+void dibujabala(struct dispara* bala, ALLEGRO_BITMAP* bala_imagen) {
+    for (int i = 0; i < tiradores; i++) {
+        if (bala[i].activado == 0) {
+            al_draw_bitmap(bala_imagen, bala[i].posx, bala[i].posy, 0);
+        }
+    }
+}
+
+
+
+void infriamientobala(){
+
+
+
+
+
+}
