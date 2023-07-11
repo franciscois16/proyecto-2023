@@ -49,7 +49,7 @@ int agarre = 0;
 char mapa1[maxcolumnas][maxfilas];
 int main()
 {
-    int retardo = 0;
+    int retardo = 0 , retardo_1 = 0;
     int personaje_y = 0; 
     int camara_y = 0; 
 
@@ -137,8 +137,19 @@ int main()
                     
                     acciones(&jugador, &inercia,&agarre);
                     moverpersonaje(&jugador);
-                    diparabala(balas,bala);
+                    
+                    printf("1");
                 }
+
+                if(retardo_1==0)
+                {
+                    
+                    diparabala(balas,bala);
+                    printf("2");
+                }
+
+                retardo_1=(retardo_1+1)%3;
+                
                 retardo=(retardo+1)%2;
                 al_flip_display(); 
             } while (jugador.vidas > 1);
@@ -413,7 +424,7 @@ void diparabala(struct dispara* balas, ALLEGRO_BITMAP* bala) {
             // Verificar si hay una 'x' en los próximos 30 píxeles en la dirección de avance
             
 
-            if (mapa1[balas[i].posx / 30][(balas[i].posy / 30) - 1] == 'x') {
+            if (mapa1[balas[i].posx / 30][(balas[i].posy / 30)] == 'x') {
                 balas[i].activado = 1;
             }
 
