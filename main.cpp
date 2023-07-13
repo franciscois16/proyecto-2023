@@ -445,13 +445,13 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1) {
                 if (proyectil[i].activado[j] == 1 ) {
                     
                     proyectil[i].activado[j] = 0;
-                    printf("\nprueba:j%d estado%d", j, proyectil[i].activado[j]);
+                    //printf("\nprueba:j%d estado%d", j, proyectil[i].activado[j]);
                     proyectil[i].posx[j] = proyectil[i].dibposx;
                     proyectil[i].posy[j] = proyectil[i].dibposy - 30;
                 } else {
                     
                     proyectil[i].posy[j] -= 1;
-                    printf("\nposicioni:%d,pos%d",j, proyectil[i].posy[j]);
+                    //printf("\nposicioni:%d,pos%d",j, proyectil[i].posy[j]);
 
                     // Verificar si hay una 'x' en los próximos 30 píxeles en la dirección de avance
                     if (mapa1[proyectil[i].posx[j] / 30][proyectil[i].posy[j] / 30] == 'x') {
