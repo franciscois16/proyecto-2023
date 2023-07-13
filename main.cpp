@@ -29,12 +29,12 @@
 
 
     struct proyectil {
-    int dibposx;
-    int dibposy;
+    int dibposx; //posicion x de donde parte la bala
+    int dibposy; //posicion y de donde parte la bala
     //int direccion;
-    int posx[maxbalas];
-    int posy[maxbalas];
-    int activado[maxbalas];
+    int posx[maxbalas]; //posicion actual de donde esta la bala
+    int posy[maxbalas]; //posicion actual de donde esta la bala
+    int activado[maxbalas]; // estado que determina si la bala se mueve o no 
     };
     
 
