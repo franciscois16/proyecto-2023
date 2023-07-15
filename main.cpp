@@ -5,8 +5,8 @@
     #include <allegro5/allegro_acodec.h>
     #include <stdio.h>
     #include<cmath>
-    #define maxfilas 30
-    #define maxcolumnas 20
+    #define maxfilas 50
+    #define maxcolumnas 30
     #define paso 1
     #define maxtiradores 3
     #define maxbalas 5
@@ -16,7 +16,10 @@
         int posx= 0.0;
         int posy= 0.0;
         int vidas = 3;
-        int estado = 0;
+        int quieto = 0;
+        int camina = 0;
+        int salta = 0;
+        int pared = 0;
         
     };
 
@@ -49,8 +52,8 @@
     void diparabala(struct proyectil* proyectil, ALLEGRO_BITMAP* bala_imagen);
     void enfriamientobala();
 
-    const int SCREEN_WIDTH = 30*30;
-    const int SCREEN_HEIGHT = 20*30;
+    const int SCREEN_WIDTH = 50*30;
+    const int SCREEN_HEIGHT = 30*30;
     const float IMAGE_SPEED = 20.0f;
 
     int fil,col,inercia = 0;
@@ -71,7 +74,7 @@
         al_init_font_addon();
         al_install_keyboard();
 
-        ALLEGRO_TIMER *timer = al_create_timer(1.0 / 1.0);//este es para que decir cada cuanto queremos que se haga una accion = a fps aqui son 30 cada seg
+        ALLEGRO_TIMER *timer = al_create_timer(1.0 / 120);//este es para que decir cada cuanto queremos que se haga una accion = a fps aqui son 30 cada seg
         ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue();
         ALLEGRO_DISPLAY *disp = al_create_display(SCREEN_WIDTH, SCREEN_HEIGHT);
         ALLEGRO_FONT *font = al_create_builtin_font();
@@ -142,7 +145,7 @@
                         break;  // Salir del bucle si la tecla 'ESC' está presionada
                     }
 
-                    al_draw_bitmap(imagen, posX, posY, 0);
+                    al_draw_bitmap(imagen, 0, 0, 0);
                     dibujamapa(ladrillo, escalera, trampabmp,font);
                     dibujarpersonaje(personaje,jugador);
                     moverCamara(jugador.posy,camara_y);
@@ -163,9 +166,9 @@
                         //printf("2");
                     }
 
-                    retardo_1=(retardo_1+1)%3;
+                    //retardo_1=(retardo_1+1)%3;
                     
-                    retardo=(retardo+1)%2;
+                    //retardo=(retardo+1)%2;
                     al_flip_display(); 
                 } while (jugador.vidas > 1);
 
@@ -475,6 +478,5 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1) {
         
 
     }
-
 
 
