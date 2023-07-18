@@ -43,7 +43,7 @@
 
     void cargarmapaarchivo(struct perso* jugador,struct proyectil* proyectil1,int* nivelactual);
     void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p);
-    void dibujarpersonaje(ALLEGRO_BITMAP* personaje,struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha);
+    void dibujarpersonaje(ALLEGRO_BITMAP* personaje,struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha,int* pcaminaizq);
     void moverpersonaje(struct perso* jugador);
     void acciones(struct perso* jugador,int* inercia,int* agarre,int* nivel);
     int moverCamara(int personaje_y, int camara_y);
@@ -51,6 +51,8 @@
     void diparabala(struct proyectil* proyectil, ALLEGRO_BITMAP* bala_imagen);
     void enfriamientobala();
     void verificanivel(int* nivelactual , int* nivel,struct perso* jugador, struct proyectil* proyectil1);
+    void menu(int* opcion);
+
 
     const int SCREEN_WIDTH = 50*30;
     const int SCREEN_HEIGHT = 30*30;
@@ -70,7 +72,8 @@
         int personaje_y = 0; 
         int camara_y = 0; 
         int nivelactual = 1 , nivel = 1;
-        int p=0,pani=0,pcaminader=0;
+        int p=0,pani=0,pcaminader=0,pcaminaizq=7;
+        int opcion=1;
 
         al_init();
         al_install_audio();
@@ -129,7 +132,7 @@
         
         
         
-        while (jugador.vidas > 1)
+        while (opcion!=4)
         {
             al_start_timer(timer);
             al_wait_for_event(queue, &event);
@@ -147,43 +150,51 @@
             
                 cargarmapaarchivo(&jugador ,proyectil1,&nivelactual);
                 ALLEGRO_KEYBOARD_STATE keyboard_state;
+                if (opcion == 1) {
+                    menu(&opcion);
+                }
+                
 
-                do {
-                    al_get_keyboard_state(&keyboard_state);
+                if (opcion==2)
+                {
+                   do {
+                        al_get_keyboard_state(&keyboard_state);
 
-                    if (al_key_down(&keyboard_state, ALLEGRO_KEY_ESCAPE)) {
-                        break;  // Salir del bucle si la tecla 'ESC' está presionada
-                    }
+                        if (al_key_down(&keyboard_state, ALLEGRO_KEY_ESCAPE)) {
+                            break;  // Salir del bucle si la tecla 'ESC' está presionada
+                        }
 
-                    al_draw_bitmap(imagen, 0, 0, 0);
-                    verificanivel(&nivelactual, &nivel, &jugador, proyectil1);
-                    dibujamapa(ladrillo, escalera, trampabmp,font,portal,&p);
-                    dibujarpersonaje(personajequieto,jugador,&pani,&pcaminader,caminaderecha);
-                    moverCamara(jugador.posy,camara_y);
-                    dibujabala(proyectil1,bala);
-                    if (retardo==0)
-                    {
+                        al_draw_bitmap(imagen, 0, 0, 0);
+                        verificanivel(&nivelactual, &nivel, &jugador, proyectil1);
+                        dibujamapa(ladrillo, escalera, trampabmp,font,portal,&p);
+                        dibujarpersonaje(personajequieto,jugador,&pani,&pcaminader,caminaderecha,&pcaminaizq);
+                        moverCamara(jugador.posy,camara_y);
+                        dibujabala(proyectil1,bala);
+                        if (retardo==0)
+                        {
+                            
+                            acciones(&jugador, &inercia,&agarre,&nivel);
+                            moverpersonaje(&jugador);
+                            
+                        // printf("1");
+                        }
+
+                        if(retardo_1==0)
+                        {
+                            
+                            diparabala(proyectil1,bala);
+                            //printf("2");
+                        }
+
+                        //retardo_1=(retardo_1+1)%3;
                         
-                        acciones(&jugador, &inercia,&agarre,&nivel);
-                        moverpersonaje(&jugador);
+                        //retardo=(retardo+1)%2;
+                        //al_rest(0.01);
                         
-                       // printf("1");
-                    }
-
-                    if(retardo_1==0)
-                    {
-                        
-                        diparabala(proyectil1,bala);
-                        //printf("2");
-                    }
-
-                    //retardo_1=(retardo_1+1)%3;
-                    
-                    //retardo=(retardo+1)%2;
-                    //al_rest(0.01);
-                    
-                    al_flip_display(); 
-                } while (jugador.vidas > 1);
+                        al_flip_display(); 
+                    } while (jugador.vidas > 1); /* code */
+                }
+                
 
 
             
@@ -208,6 +219,28 @@
 
         return 0;
     }
+
+
+
+void menu(int* opcion) {
+    ALLEGRO_KEYBOARD_STATE keyboard_state;
+    
+    while (*opcion == 1) {
+        al_get_keyboard_state(&keyboard_state);
+        
+        if (al_key_down(&keyboard_state, ALLEGRO_KEY_1)) {
+            *opcion = 1;
+        } else if (al_key_down(&keyboard_state, ALLEGRO_KEY_2)) {
+            *opcion = 2;
+        } else if (al_key_down(&keyboard_state, ALLEGRO_KEY_3)) {
+            *opcion = 3;
+        } else if (al_key_down(&keyboard_state, ALLEGRO_KEY_4)) {
+            *opcion = 4;
+        }
+    }
+    
+    // Aquí puedes usar el valor de "*opcion" para realizar acciones específicas según la tecla presionada
+}
 
 
 
@@ -296,7 +329,7 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
     //   al_draw_textf(font, al_map_rgb(255, 0, 0), 10, 30, 0, "PUNTAJE: %d", puntaje);
     }
 
-    void dibujarpersonaje(ALLEGRO_BITMAP* personajequieto, struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha) {
+    void dibujarpersonaje(ALLEGRO_BITMAP* personajequieto, struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha,int* pcaminaizq) {
 
         if(jugador.estado==1){
             al_draw_bitmap_region(personajequieto,(*pani)*30,0,30,30,jugador.posx,jugador.posy,0);
@@ -307,15 +340,27 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
             }
         }
 
-        if(jugador.estado==2){
+        else if(jugador.estado==2){
             al_draw_bitmap_region(caminaderecha,(*pcaminader)*30,0,30,30,jugador.posx,jugador.posy,0);
             (*pcaminader)++;
-            printf("\ncamina%d",*pcaminader);
+            //printf("\ncamina%d",*pcaminader);
             if (*pcaminader>6)
             {
                 *pcaminader=0;
             }
         }
+
+        else if(jugador.estado==3){
+            al_draw_bitmap_region(caminaderecha,(*pcaminaizq)*30,0,30,30,jugador.posx,jugador.posy,0);
+            (*pcaminaizq)++;
+           // printf("\nizquierda%d",*pcaminaizq);
+            if (*pcaminaizq>12)
+            {
+                *pcaminaizq=7;
+            }
+        }
+
+
         //al_draw_bitmap(personajequieto, pixelPosX, pixelPosY, 0);
     }
 
