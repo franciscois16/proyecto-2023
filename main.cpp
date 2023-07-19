@@ -224,10 +224,16 @@
 
 void menu(int* opcion) {
     ALLEGRO_KEYBOARD_STATE keyboard_state;
-    
+    ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu.png");
+
+    if (!menu) {
+        fprintf(stderr, "Error al cargar la imagen del menú.\n");
+        return;
+    }
+
     while (*opcion == 1) {
         al_get_keyboard_state(&keyboard_state);
-        
+        al_draw_bitmap(menu, 0, 0, 0);
         if (al_key_down(&keyboard_state, ALLEGRO_KEY_1)) {
             *opcion = 1;
         } else if (al_key_down(&keyboard_state, ALLEGRO_KEY_2)) {
@@ -237,10 +243,14 @@ void menu(int* opcion) {
         } else if (al_key_down(&keyboard_state, ALLEGRO_KEY_4)) {
             *opcion = 4;
         }
+        al_flip_display(); 
     }
+
     
+    al_destroy_bitmap(menu);
     // Aquí puedes usar el valor de "*opcion" para realizar acciones específicas según la tecla presionada
 }
+
 
 
 
