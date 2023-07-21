@@ -4,6 +4,7 @@
     #include <allegro5/allegro_audio.h>
     #include <allegro5/allegro_acodec.h>
     #include <stdio.h>
+    #include <stdbool.h>
     #include<cmath>
     #define maxfilas 50
     #define maxcolumnas 30
@@ -17,7 +18,7 @@
         int posx= 0.0;
         int posy= 0.0;
         int estado =1; // 1=quieto,2camina derecha,3camina izquierda,4 salta y 5 se agarra
-        int vidas = 3;
+        int vidas = 300;
         //int quieto = 0;
         //int camina = 0;
         //int salta = 0;
@@ -44,14 +45,16 @@
     void cargarmapaarchivo(struct perso* jugador,struct proyectil* proyectil1,int* nivelactual);
     void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p);
     void dibujarpersonaje(ALLEGRO_BITMAP* personaje,struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha,int* pcaminaizq);
-    void moverpersonaje(struct perso* jugador);
+    void moverpersonaje(struct perso* jugador,struct proyectil* proyectil);
     void acciones(struct perso* jugador,int* inercia,int* agarre,int* nivel);
     int moverCamara(int personaje_y, int camara_y);
     void dibujabala(struct proyectil* proyectil, ALLEGRO_BITMAP* bala_imagen);
     void diparabala(struct proyectil* proyectil, ALLEGRO_BITMAP* bala_imagen);
-    void enfriamientobala();
+    bool enfriamientobala();
     void verificanivel(int* nivelactual , int* nivel,struct perso* jugador, struct proyectil* proyectil1);
     void menu(int* opcion);
+    bool verificarColision(struct perso* jugador, struct proyectil* proyectil1);
+
 
 
     const int SCREEN_WIDTH = 50*30;
@@ -60,7 +63,7 @@
 
     int fil,col,inercia = 0;
     int agarre = 0;
-    int bandera=50000;
+    int bandera=0;
     
     
     
@@ -174,7 +177,7 @@
                         {
                             
                             acciones(&jugador, &inercia,&agarre,&nivel);
-                            moverpersonaje(&jugador);
+                            moverpersonaje(&jugador,proyectil1);
                             
                         // printf("1");
                         }
@@ -186,7 +189,7 @@
                             //printf("2");
                         }
 
-                        //retardo_1=(retardo_1+1)%3;
+                        retardo_1=(retardo_1+1)%3;
                         
                         //retardo=(retardo+1)%2;
                         //al_rest(0.01);
@@ -374,7 +377,7 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
         //al_draw_bitmap(personajequieto, pixelPosX, pixelPosY, 0);
     }
 
-    void moverpersonaje(struct perso* jugador) {
+    void moverpersonaje(struct perso* jugador,struct proyectil* proyectil1) {
             ALLEGRO_KEYBOARD_STATE keyboard_state;
             al_get_keyboard_state(&keyboard_state);
 
@@ -424,6 +427,11 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
 
             if (ninguna_tecla_presionada) {
                jugador->estado=1;
+            }
+
+            if (verificarColision(jugador, proyectil1)) {
+                // Si hay colisión, realiza alguna acción (por ejemplo, mostrar un mensaje)
+                printf("¡Has sido alcanzado por una bala! vidas %d\n",jugador->vidas);
             }
 
     
@@ -525,12 +533,12 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
         }
 
 
-        if(mapa1[jugador->posx/30][(jugador->posy)/30] == 't')
-        {
-            jugador->vidas = jugador->vidas - 1;
-        printf("%d vidas" , jugador->vidas);
-            jugador->posx -= 30;
-        }
+        // if(mapa1[jugador->posx/30][(jugador->posy)/30] == 't')
+        // {
+        //     jugador->vidas = jugador->vidas - 1;
+        // printf("%d vidas" , jugador->vidas);
+        //     jugador->posx -= 30;
+        // }
 
         if(mapa1[jugador->posx/30][(jugador->posy)/30] == 'n')
         {
@@ -570,13 +578,14 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
 
         for (i = 0; i < maxtiradores; i++) {
             for (j = 0; j < maxbalas; j++) {
-                enfriamientobala();
-                if (proyectil[i].activado[j] == 1 ) {
-                    
+                
+                if (proyectil[i].activado[j] == 1) {
+                     if(enfriamientobala() == true){
                     proyectil[i].activado[j] = 0;
                     //printf("\nprueba:j%d estado%d", j, proyectil[i].activado[j]);
                     proyectil[i].posx[j] = proyectil[i].dibposx;
                     proyectil[i].posy[j] = proyectil[i].dibposy - 30;
+                    }
                 } else {
                     
                     proyectil[i].posy[j] -= 1;
@@ -591,16 +600,26 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
         }
     }
 
-    void enfriamientobala() {
-        do
-        {
+    bool enfriamientobala() {
+
             if (bandera>0)
             {
-                bandera = bandera -1;
+               bandera = bandera - 4; 
             }
             
-        } while (bandera!=0);
-        bandera=50000;
+            
+           // printf("\nbandera %d ",bandera);
+            
+            if (bandera == 0)
+            {
+               bandera=2000; 
+               return true;
+            }
+            else{
+             return false;
+            }
+        
+        
         
 
     }
@@ -614,4 +633,36 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
 
     }
 
+bool verificarColision(struct perso* jugador, struct proyectil* proyectil) {
+    // Definimos el tamaño de la zona de colisión adicional (en píxeles)
+    int colisionAdicional = 4;
+
+    // Coordenadas del rectángulo que representa al jugador
+    int jugador_x1 = jugador->posx + colisionAdicional;
+    int jugador_x2 = jugador->posx + 30 - colisionAdicional;
+    int jugador_y1 = jugador->posy + colisionAdicional;
+    int jugador_y2 = jugador->posy + 30 - colisionAdicional;
+
+    // Iteramos sobre las balas y comprobamos si alguna colisiona con el jugador
+    for (int i = 0; i < maxtiradores; i++) {
+        for (int j = 0; j < maxbalas; j++) {
+            if (proyectil[i].activado[j] == 0) {
+                // Coordenadas del rectángulo que representa a la bala
+                int bala_x1 = proyectil[i].posx[j] + colisionAdicional;
+                int bala_x2 = proyectil[i].posx[j] + 30 - colisionAdicional;
+                int bala_y1 = proyectil[i].posy[j] + colisionAdicional;
+                int bala_y2 = proyectil[i].posy[j] + 30 - colisionAdicional;
+
+                // Comprobamos si hay intersección entre los rectángulos (colisión)
+                if (jugador_x1 < bala_x2 && jugador_x2 > bala_x1 && jugador_y1 < bala_y2 && jugador_y2 > bala_y1) {
+                    jugador->vidas--;
+                    proyectil[i].posy[j]=1;
+                    return true; // Colisión detectada
+                }
+            }
+        }
+    }
+
+    return false; // No hay colisión
+}
 
