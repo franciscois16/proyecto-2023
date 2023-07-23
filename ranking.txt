@@ -1,0 +1,10 @@
+juan 1000
+maria 200
+pedro 1100
+antonio 100
+luis 330
+diego 2000
+sonia 10
+nicolas 900
+claudio 400
+sergio 1020

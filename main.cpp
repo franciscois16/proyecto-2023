@@ -3,6 +3,7 @@
     #include <allegro5/allegro_image.h>
     #include <allegro5/allegro_audio.h>
     #include <allegro5/allegro_acodec.h>
+    #include <allegro5/allegro_native_dialog.h>
     #include <stdio.h>
     #include <stdbool.h>
     #include<cmath>
@@ -12,6 +13,8 @@
     #define maxtiradores 3
     #define maxbalas 5
     #define maxniveles 3
+    #define MAX_JUGADORES 10
+    #define MAX_NOMBRE  50
 
     struct perso
     {
@@ -54,6 +57,9 @@
     void verificanivel(int* nivelactual , int* nivel,struct perso* jugador, struct proyectil* proyectil1);
     void menu(int* opcion);
     bool verificarColision(struct perso* jugador, struct proyectil* proyectil1);
+    void ingresarNombre(char* nombre);
+    void leerranking(char nombres[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]);
+    void dibuja_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]);
 
 
 
@@ -77,6 +83,9 @@
         int nivelactual = 1 , nivel = 1;
         int p=0,pani=0,pcaminader=0,pcaminaizq=7;
         int opcion=1;
+        char nombre[50];
+        char nombresranking[10][50];
+        int puntos[10];
 
         al_init();
         al_install_audio();
@@ -149,7 +158,7 @@
             if (redraw && al_is_event_queue_empty(queue))
             {
                 al_clear_to_color(al_map_rgb(0, 0, 0));
-
+                
             
                 cargarmapaarchivo(&jugador ,proyectil1,&nivelactual);
                 ALLEGRO_KEYBOARD_STATE keyboard_state;
@@ -160,7 +169,9 @@
 
                 if (opcion==2)
                 {
+                    ingresarNombre(nombre);
                    do {
+                        
                         al_get_keyboard_state(&keyboard_state);
 
                         if (al_key_down(&keyboard_state, ALLEGRO_KEY_ESCAPE)) {
@@ -197,6 +208,16 @@
                         al_flip_display(); 
                     } while (jugador.vidas > 1); /* code */
                 }
+
+                if (opcion==3)
+                {
+                    al_get_keyboard_state(&keyboard_state);
+                    leerranking(nombresranking,puntos);
+                    while(al_key_down(&keyboard_state, ALLEGRO_KEY_BACKSPACE)){
+                    dibuja_ranking(nombresranking, puntos);
+                    }
+                }
+                
                 
 
 
@@ -666,3 +687,118 @@ bool verificarColision(struct perso* jugador, struct proyectil* proyectil) {
     return false; // No hay colisión
 }
 
+void ingresarNombre(char* nombre) {
+    ALLEGRO_FONT* font = al_create_builtin_font();
+    ALLEGRO_COLOR color = al_map_rgb(255, 255, 255);
+    ALLEGRO_COLOR bgColor = al_map_rgba(0, 0, 0, 200);
+    const int textWidth = 300;
+    const int textHeight = 50;
+
+    ALLEGRO_BITMAP* textBitmap = al_create_bitmap(textWidth, textHeight);
+    al_set_target_bitmap(textBitmap);
+    al_clear_to_color(bgColor);
+    al_draw_text(font, color, textWidth / 2, textHeight / 2 - al_get_font_ascent(font) / 2, ALLEGRO_ALIGN_CENTER, "Ingresa tu nombre:");
+    al_set_target_bitmap(al_get_backbuffer(al_get_current_display()));
+    al_draw_bitmap(textBitmap, al_get_display_width(al_get_current_display()) / 2 - textWidth / 2, al_get_display_height(al_get_current_display()) / 2 - textHeight / 2, 0);
+    al_flip_display();
+
+    bool done = false;
+    ALLEGRO_EVENT_QUEUE* event_queue = al_create_event_queue();
+    al_register_event_source(event_queue, al_get_keyboard_event_source());
+
+    char inputText[50] = { 0 };
+    int currentIndex = 0;
+
+    while (!done) {
+        ALLEGRO_EVENT ev;
+        al_wait_for_event(event_queue, &ev);
+
+        if (ev.type == ALLEGRO_EVENT_KEY_DOWN) {
+            if (ev.keyboard.keycode == ALLEGRO_KEY_ENTER) {
+                strcpy(nombre, inputText);
+                done = true;
+            } else if (ev.keyboard.keycode == ALLEGRO_KEY_BACKSPACE) {
+                if (currentIndex > 0) {
+                    inputText[currentIndex - 1] = '\0';
+                    currentIndex--;
+                }
+            } else if (ev.keyboard.keycode >= ALLEGRO_KEY_A && ev.keyboard.keycode <= ALLEGRO_KEY_Z && currentIndex < sizeof(inputText) - 1) {
+                char ch = 'a' + ev.keyboard.keycode - ALLEGRO_KEY_A;
+                inputText[currentIndex] = ch;
+                currentIndex++;
+            }
+
+            al_set_target_bitmap(textBitmap);
+            al_clear_to_color(bgColor);
+            al_draw_text(font, color, textWidth / 2, textHeight / 2 - al_get_font_ascent(font) / 2, ALLEGRO_ALIGN_CENTER, inputText);
+            al_set_target_bitmap(al_get_backbuffer(al_get_current_display()));
+            al_draw_bitmap(textBitmap, al_get_display_width(al_get_current_display()) / 2 - textWidth / 2, al_get_display_height(al_get_current_display()) / 2 - textHeight / 2, 0);
+            al_flip_display();
+        }
+    }
+
+    al_destroy_bitmap(textBitmap);
+    al_destroy_event_queue(event_queue);
+    al_destroy_font(font);
+}
+
+
+void leerranking(char nombres[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]) {
+    FILE *archivo = fopen("ranking.txt", "r");
+    if (archivo == NULL) {
+        printf("Error al abrir el archivo de ranking.\n");
+        return;
+    }
+
+    int i = 0;
+    char nombre[MAX_NOMBRE];
+    int puntaje;
+
+    while (i < MAX_JUGADORES && fscanf(archivo, "%s %d", nombre, &puntaje) == 2) {
+        strcpy(nombres[i], nombre);
+        puntos[i] = puntaje;
+        i++;
+    }
+    printf("todo leido");
+    fclose(archivo);
+}
+
+void dibuja_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]) {
+    ALLEGRO_FONT* font = al_create_builtin_font();
+    ALLEGRO_COLOR color = al_map_rgb(255, 255, 255);
+    ALLEGRO_COLOR bgColor = al_map_rgba(0, 0, 0, 200);
+    const int textWidth = 300;
+    const int textHeight = 50;
+
+    ALLEGRO_BITMAP* textBitmap = al_create_bitmap(textWidth, textHeight * (MAX_JUGADORES + 1));
+    al_set_target_bitmap(textBitmap);
+
+    al_clear_to_color(bgColor);
+
+    for (int i = 0; i < MAX_JUGADORES; i++) {
+        char text[MAX_NOMBRE + 10];
+        sprintf(text, "%d. %s - %d puntos", i + 1, nombresranking[i], puntos[i]);
+        al_draw_text(font, color, textWidth / 2, i * textHeight + textHeight / 2 - al_get_font_ascent(font) / 2, ALLEGRO_ALIGN_CENTER, text);
+    }
+
+    al_set_target_bitmap(al_get_backbuffer(al_get_current_display()));
+    al_draw_bitmap(textBitmap, al_get_display_width(al_get_current_display()) / 2 - textWidth / 2, al_get_display_height(al_get_current_display()) / 2 - textHeight * (MAX_JUGADORES + 1) / 2, 0);
+    al_flip_display();
+
+    al_destroy_bitmap(textBitmap);
+
+    bool done = false;
+    ALLEGRO_EVENT_QUEUE* event_queue = al_create_event_queue();
+    al_register_event_source(event_queue, al_get_keyboard_event_source());
+
+    while (!done) {
+        ALLEGRO_EVENT ev;
+        al_wait_for_event(event_queue, &ev);
+
+        if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+            done = true;
+        }
+    }
+
+    al_destroy_event_queue(event_queue);
+}
