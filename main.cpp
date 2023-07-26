@@ -31,13 +31,7 @@
         
     };
 
-    struct tirador
-    {
-        
-        int dibposx; //posicion x de donde parte la bala
-        int dibposy; //posicion y de donde parte la bala
-        struct proyectil balas[maxbalas];
-    };
+    
     
 
     struct proyectil {
@@ -49,19 +43,25 @@
         int tipo; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo
     };
     
+    struct tirador
+    {
+        
+        int dibposx; //posicion x de donde parte la bala
+        int dibposy; //posicion y de donde parte la bala
+        struct proyectil balas[maxbalas];
+    };
 
-
-    void cargarmapaarchivo(struct perso* jugador,struct proyectil* proyectil1,int* nivelactual,int* lugarportali,int* lugarportalj);
+    void cargarmapaarchivo(struct perso* jugador,struct tirador* proyectil1,int* nivelactual,int* lugarportali,int* lugarportalj);
     void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave);
     void dibujarpersonaje(ALLEGRO_BITMAP* personaje,struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha,int* pcaminaizq);
-    void moverpersonaje(struct perso* jugador,struct proyectil* proyectil);
+    void moverpersonaje(struct perso* jugador,struct tirador* proyectil1);
     void acciones(struct perso* jugador,int* inercia,int* agarre,int* nivel,int* lugarportali,int* lugarportalj);
-    void dibujabala(struct proyectil* proyectil, ALLEGRO_BITMAP* bala_imagen);
-    void diparabala(struct proyectil* proyectil, ALLEGRO_BITMAP* bala_imagen);
+    void dibujabala(struct tirador* proyectil1, ALLEGRO_BITMAP* bala_imagen);
+    void diparabala(struct tirador* proyectil1, ALLEGRO_BITMAP* bala_imagen);
     bool enfriamientobala();
-    void verificanivel(int* nivelactual , int* nivel,struct perso* jugador, struct proyectil* proyectil1,int* lugarportali,int* lugarportalj);
+    void verificanivel(int* nivelactual , int* nivel,struct perso* jugador, struct tirador* proyectil1,int* lugarportali,int* lugarportalj);
     void menu(int* opcion);
-    bool verificarColision(struct perso* jugador, struct proyectil* proyectil1);
+    bool verificarColision(struct perso* jugador, struct tirador* proyectil1);
     void ingresarNombre(char* nombre);
     void leerranking(char nombres[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]);
     void dibuja_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES],int* opcion);
@@ -118,7 +118,7 @@
         ALLEGRO_BITMAP* ladrillo = al_load_bitmap("imagenes/ladrillo.bmp");
         ALLEGRO_BITMAP* escalera = al_load_bitmap("imagenes/escalera.bmp");
         ALLEGRO_BITMAP* trampabmp = al_load_bitmap("imagenes/trampa.png");
-        ALLEGRO_BITMAP* bala = al_load_bitmap("imagenes/pedribala.jpg");
+        ALLEGRO_BITMAP* bala = al_load_bitmap("imagenes/bala.png");
         ALLEGRO_BITMAP* portal = al_load_bitmap("imagenespersonaje/portal.png");
         //ALLEGRO_SAMPLE *salto = al_load_sample("imagenes/salto.wav");
         ALLEGRO_BITMAP* personajequieto = al_load_bitmap("imagenespersonaje/pquieto.png");
@@ -303,7 +303,7 @@ void reinicia(struct perso* jugador, int* nivelactual, int* nivel) {
 
 
 
-void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* nivelactual,int* lugarportali,int* lugarportalj) {
+void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* nivelactual,int* lugarportali,int* lugarportalj) {
     ALLEGRO_FILE* mapa;
     
     if(*nivelactual==1){
@@ -336,8 +336,8 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
                 proyectil1[z].dibposx = j * 30;
                 proyectil1[z].dibposy = i * 30;
                 for (int b = 0; b < maxbalas; b++) {
-                    proyectil1[z].activado[b] = 1;
-                    printf("\nestado:%d",proyectil1[z].activado[b]);
+                    proyectil1[z].balas[b].activado = 1;
+                    printf("\nestado:%d",proyectil1[z].balas[b].activado);
                 }
                 printf("\nestex : %d", proyectil1[z].dibposx);
                 printf("\nestey : %d", proyectil1[z].dibposy);
@@ -446,7 +446,7 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
         //al_draw_bitmap(personajequieto, pixelPosX, pixelPosY, 0);
     }
 
-    void moverpersonaje(struct perso* jugador,struct proyectil* proyectil1) {
+    void moverpersonaje(struct perso* jugador,struct tirador* proyectil1) {
             ALLEGRO_KEYBOARD_STATE keyboard_state;
             al_get_keyboard_state(&keyboard_state);
 
@@ -624,38 +624,38 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
         // al_destroy_sample(salto);
     }
 
-    void dibujabala(struct proyectil* proyectil, ALLEGRO_BITMAP* bala_imagen) {
+    void dibujabala(struct tirador* proyectil1, ALLEGRO_BITMAP* bala_imagen) {
         for (int i = 0; i < maxtiradores; i++) {
             for (int j = 0; j < maxbalas; j++) {
-                if (proyectil[i].activado[j] == 0) {
-                    al_draw_bitmap(bala_imagen, proyectil[i].posx[j], proyectil[i].posy[j], 0);
+                if (proyectil1[i].balas[j].activado == 0) {
+                    al_draw_bitmap(bala_imagen, proyectil1[i].balas[j].posx, proyectil1[i].balas[j].posy, 0);
                 }
             }
         }
     }
 
 
-    void diparabala(struct proyectil* proyectil, ALLEGRO_BITMAP* bala) {
+    void diparabala(struct tirador* proyectil1, ALLEGRO_BITMAP* bala) {
      int i, j;
 
         for (i = 0; i < maxtiradores; i++) {
             for (j = 0; j < maxbalas; j++) {
                 
-                if (proyectil[i].activado[j] == 1) {
+                if (proyectil1[i].balas[j].activado == 1) {
                      if(enfriamientobala() == true){
-                    proyectil[i].activado[j] = 0;
+                    proyectil1[i].balas[j].activado = 0;
                     //printf("\nprueba:j%d estado%d", j, proyectil[i].activado[j]);
-                    proyectil[i].posx[j] = proyectil[i].dibposx;
-                    proyectil[i].posy[j] = proyectil[i].dibposy - 30;
+                    proyectil1[i].balas[j].posx = proyectil1[i].dibposx;
+                    proyectil1[i].balas[j].posy = proyectil1[i].dibposy - 30;
                     }
                 } else {
                     
-                    proyectil[i].posy[j] -= 1;
+                    proyectil1[i].balas[j].posy -= 1;
                     //printf("\nposicioni:%d,pos%d",j, proyectil[i].posy[j]);
 
                     // Verificar si hay una 'x' en los próximos 30 píxeles en la dirección de avance
-                    if (mapa1[proyectil[i].posx[j] / 30][proyectil[i].posy[j] / 30] == 'x') {
-                        proyectil[i].activado[j] = 1;
+                    if (mapa1[proyectil1[i].balas[j].posx / 30][proyectil1[i].balas[j].posy / 30] == 'x') {
+                        proyectil1[i].balas[j].activado = 1;
                     }
                 }
             }
@@ -686,7 +686,7 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
 
     }
 
-    void verificanivel(int* nivelactual , int* nivel,struct perso* jugador, struct proyectil* proyectil1,int* lugarportali,int* lugarportalj){
+    void verificanivel(int* nivelactual , int* nivel,struct perso* jugador, struct tirador* proyectil1,int* lugarportali,int* lugarportalj){
         if(*nivelactual != *nivel){
             *nivelactual=*nivel;
             cargarmapaarchivo(jugador ,proyectil1,nivelactual,lugarportali, lugarportalj);
@@ -695,7 +695,7 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
 
     }
 
-    bool verificarColision(struct perso* jugador, struct proyectil* proyectil) {
+    bool verificarColision(struct perso* jugador, struct tirador* proyectil1) {
         // Definimos el tamaño de la zona de colisión adicional (en píxeles)
         int colisionAdicional = 4;
 
@@ -708,17 +708,17 @@ void cargarmapaarchivo(struct perso* jugador, struct proyectil* proyectil1,int* 
         // Iteramos sobre las balas y comprobamos si alguna colisiona con el jugador
         for (int i = 0; i < maxtiradores; i++) {
             for (int j = 0; j < maxbalas; j++) {
-                if (proyectil[i].activado[j] == 0) {
+                if (proyectil1[i].balas[j].activado == 0) {
                     // Coordenadas del rectángulo que representa a la bala
-                    int bala_x1 = proyectil[i].posx[j] + colisionAdicional;
-                    int bala_x2 = proyectil[i].posx[j] + 30 - colisionAdicional;
-                    int bala_y1 = proyectil[i].posy[j] + colisionAdicional;
-                    int bala_y2 = proyectil[i].posy[j] + 30 - colisionAdicional;
+                    int bala_x1 = proyectil1[i].balas[j].posx + colisionAdicional;
+                    int bala_x2 = proyectil1[i].balas[j].posx + 30 - colisionAdicional;
+                    int bala_y1 = proyectil1[i].balas[j].posx + colisionAdicional;
+                    int bala_y2 = proyectil1[i].balas[j].posx + 30 - colisionAdicional;
 
                     // Comprobamos si hay intersección entre los rectángulos (colisión)
                     if (jugador_x1 < bala_x2 && jugador_x2 > bala_x1 && jugador_y1 < bala_y2 && jugador_y2 > bala_y1) {
                         jugador->vidas--;
-                        proyectil[i].posy[j]=1;
+                        proyectil1[i].balas[j].posy=1;
                         return true; // Colisión detectada
                     }
                 }
