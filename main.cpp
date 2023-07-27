@@ -28,6 +28,7 @@
         //int camina = 0;
         //int salta = 0;
         //int pared = 0;
+        int puntaje=0;
         
     };
 
@@ -66,6 +67,7 @@
     void leerranking(char nombres[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]);
     void dibuja_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES],int* opcion);
     void reinicia(struct perso* jugador, int* nivelactual, int* nivel);
+    void ordena_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]);
 
 
     const int SCREEN_WIDTH = 50*30;
@@ -149,6 +151,7 @@
          
         
         leerranking(nombresranking,puntos);
+        ordena_ranking(nombresranking, puntos);
         
         
         while (opcion!=4)
@@ -473,17 +476,23 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                 }
             }
 
-            if (al_key_down(&keyboard_state, ALLEGRO_KEY_UP)) {
-                if(mapa1[(jugador->posx/30)][((jugador->posy-30)/30)]!='x'&& mapa1[jugador->posx/30][((jugador->posy+30)/30)]=='x'){
-                jugador->posy -= paso;
-                }
-            }
+            //  if (al_key_down(&keyboard_state, ALLEGRO_KEY_UP)) {
+            //      if(mapa1[(jugador->posx/30)][((jugador->posy-30)/30)]!='x'&& mapa1[jugador->posx/30][((jugador->posy+30)/30)]=='x'){
+            //      jugador->posy -= paso;
+            //      }
+            //  }
 
-            if (al_key_down(&keyboard_state, ALLEGRO_KEY_DOWN)) {
-                if(mapa1[(jugador->posx/30)][((jugador->posy+30)/30)]!='x'&& mapa1[(jugador->posx)/30][((jugador->posy+30)/30)]=='x'){
-                jugador->posy += paso;
-                }
-            }
+            // // // if (al_key_down(&keyboard_state, ALLEGRO_KEY_DOWN)) {
+            // // //     if(mapa1[(jugador->posx/30)][((jugador->posy+30)/30)]!='x'&& mapa1[(jugador->posx)/30][((jugador->posy+30)/30)]=='x'&&mapa1[(jugador->posx+29)/30][((jugador->posy+30)/30)]!='x'){
+            // // //     jugador->posy += paso;
+            // // //     }
+            // // // }
+
+            //  if (al_key_down(&keyboard_state, ALLEGRO_KEY_DOWN)) {
+            //      if(mapa1[(jugador->posx/30)][((jugador->posy+30)/30)]!='x'&& mapa1[jugador->posx/30][((jugador->posy+30)/30)]=='x'){
+            //      jugador->posy += paso;
+            //      }
+            //  }
 
 
             bool ninguna_tecla_presionada = true;
@@ -541,18 +550,24 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         }
 
         // Movimiento hacia abajo si no hay inercia, agarre o una pared en la parte inferior
-        if (mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] != 'x' && mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] != 'e' && *inercia == 0 && *agarre == 0 && mapa1[(jugador->posx+30) / 30][(jugador->posy + 30) / 30] == 'o') {
+        // if (mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] != 'x' &&mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] != 'e' &&*inercia == 0 &&*agarre == 0 &&mapa1[(jugador->posx + 30) / 30][(jugador->posy + 30) / 30] == 'o' && mapa1[(jugador->posx + 30) / 30][jugador->posy / 30] != 'x' &&mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] != 'x' &&  mapa1[jugador->posx / 30][jugador->posy / 30] != 'x') { 
+        //     jugador->posy += paso;
+        // }
+
+        if (mapa1[(jugador->posx+1)/30][(jugador->posy+1)/30]!='x'&& mapa1[(jugador->posx + 29) / 30][(jugador->posy+1) / 30] != 'x' && mapa1[(jugador->posx+1) / 30][(jugador->posy + 29) / 30] != 'x' && mapa1[(jugador->posx + 29) / 30][(jugador->posy + 30) / 30] != 'x'&& mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] != 'e' &&mapa1[(jugador->posx+30) / 30][(jugador->posy + 30) / 30] != 'e'&&*inercia == 0 &&*agarre == 0)
+        {
             jugador->posy += paso;
         }
+        
 
 
         // Movimiento hacia arriba si hay una escalera y se presiona la tecla de flecha hacia arriba
-        if (mapa1[(jugador->posx ) / 30][(jugador->posy + 30) / 30] == 'e' && al_key_down(&keyboard_state, ALLEGRO_KEY_UP) || mapa1[(jugador->posx + 30) / 30][(jugador->posy + 30) / 30] == 'e' && al_key_down(&keyboard_state, ALLEGRO_KEY_UP)) {
+         if (mapa1[jugador->posx / 30][(jugador->posy+30) / 30] == 'e'  && al_key_down(&keyboard_state, ALLEGRO_KEY_UP)|| mapa1[(jugador->posx+1) / 30][(jugador->posy) / 30] == 'e'  && al_key_down(&keyboard_state, ALLEGRO_KEY_UP)) {
             jugador->posy -= paso;
         }
 
         // Movimiento hacia abajo si hay una escalera y se presiona la tecla de flecha hacia abajo
-        if (mapa1[jugador->posx / 30][(jugador->posy+30) / 30] == 'e' && al_key_down(&keyboard_state, ALLEGRO_KEY_DOWN) || mapa1[(jugador->posx + 30) / 30][(jugador->posy) / 30] == 'e' && al_key_down(&keyboard_state, ALLEGRO_KEY_DOWN)) {
+        if (mapa1[jugador->posx / 30][(jugador->posy+30) / 30] == 'e' && al_key_down(&keyboard_state, ALLEGRO_KEY_DOWN)  ) {
             jugador->posy += paso;
         }
 
@@ -579,7 +594,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
             {
                 if(mapa1[(jugador->posx)/30][(jugador->posy-30)/30]!='x'){
                     jugador->posx-=60;
-                    *inercia += maxsalto;
+                    *inercia = maxsalto;
                     direccion = 2; 
                 }
                 
@@ -593,7 +608,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
             {
                 if(mapa1[(jugador->posx+1)/30][(jugador->posy-30)/30]!='x'){
                     jugador->posx+=60;
-                    *inercia += maxsalto;
+                    *inercia = maxsalto;
                     direccion = 1;
                     printf("%d\n", direccion);
                 }
@@ -602,6 +617,9 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
             
             
         }
+        
+
+
 
         if (mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] == 'l'){
             mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] ='o'; 
@@ -804,21 +822,63 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         fclose(archivo);
     }
 
-    void dibuja_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES],int* opcion) {
-        al_install_keyboard();
-        ALLEGRO_BITMAP* fondoranking = al_load_bitmap("imagenes/ranking.png");
-        ALLEGRO_KEYBOARD_STATE keyboard_state;
-        al_get_keyboard_state(&keyboard_state);
 
-        while (!al_key_down(&keyboard_state,ALLEGRO_KEY_9))
-        {
-            printf("\nayuda1");
-            al_get_keyboard_state(&keyboard_state);
-            al_draw_bitmap(fondoranking,0,0,0);
-            al_flip_display();
+// Otras funciones y definiciones...
+
+void dibuja_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES], int* opcion) {
+    // Código para dibujar la pantalla de ranking
+    al_clear_to_color(al_map_rgb(0, 0, 0));
+    ALLEGRO_BITMAP* fondoranking=al_load_bitmap("imagenes/ranking.jpg");
+    al_draw_bitmap(fondoranking,0,0,0);
+    ALLEGRO_FONT* font = al_create_builtin_font();
+
+    //al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_WIDTH / 2, 100, ALLEGRO_ALIGN_CENTER, "RANKING");
+    
+    for (int i = 0; i < MAX_JUGADORES; i++) {
+        if (nombresranking[i][0] != '\0') {
+            char texto[100];
+            al_draw_textf(font, al_map_rgb(255, 255, 255), SCREEN_WIDTH / 2, 120 + i * 60, ALLEGRO_ALIGN_CENTER, "%d. %s - Puntos: %d", i + 1, nombresranking[i], puntos[i]);
         }
-        
-        printf("\npresionaste salir ranking");
-        *opcion=1;
-        printf("\nopcion %d",*opcion);
     }
+
+    al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT - 100, ALLEGRO_ALIGN_CENTER, "Presiona ENTER para regresar al menú");
+    al_flip_display();
+
+    al_destroy_font(font);
+
+    ALLEGRO_KEYBOARD_STATE keyboard_state;
+    al_get_keyboard_state(&keyboard_state);
+
+    // Esperar a que se presione la tecla ENTER para regresar al menú
+    while (true) {
+        if (al_key_down(&keyboard_state, ALLEGRO_KEY_ENTER)) {
+            *opcion = 1;
+            break;
+        }
+        al_get_keyboard_state(&keyboard_state);
+    }
+}
+
+// Función main y otras funciones...
+
+void ordena_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]) {
+    int i, j;
+    char temp_nombre[MAX_NOMBRE];
+    int temp_puntos;
+
+    for (i = 0; i < MAX_JUGADORES - 1; i++) {
+        for (j = 0; j < MAX_JUGADORES - i - 1; j++) {
+            if (puntos[j] < puntos[j + 1]) {
+                // Intercambiar los puntos
+                temp_puntos = puntos[j];
+                puntos[j] = puntos[j + 1];
+                puntos[j + 1] = temp_puntos;
+
+                // Intercambiar los nombres
+                strcpy(temp_nombre, nombresranking[j]);
+                strcpy(nombresranking[j], nombresranking[j + 1]);
+                strcpy(nombresranking[j + 1], temp_nombre);
+            }
+        }
+    }
+}
