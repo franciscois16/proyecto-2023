@@ -10,7 +10,7 @@
     #define maxfilas 50
     #define maxcolumnas 30
     #define paso 1
-    #define maxtiradores 3
+    #define maxtiradores 4
     #define maxbalas 5
     #define maxniveles 3
     #define MAX_JUGADORES 10
@@ -22,7 +22,7 @@
         int posx= 0.0;
         int posy= 0.0;
         int estado =1; // 1=quieto,2camina derecha,3camina izquierda,4 salta y 5 se agarra
-        int vidas = 300;
+        int vidas = 5;
         int direccion = 0;
         //int quieto = 0;
         //int camina = 0;
@@ -53,10 +53,10 @@
     };
 
     void cargarmapaarchivo(struct perso* jugador,struct tirador* proyectil1,int* nivelactual,int* lugarportali,int* lugarportalj);
-    void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave);
+    void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave,int* puntuacion);
     void dibujarpersonaje(ALLEGRO_BITMAP* personaje,struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha,int* pcaminaizq);
     void moverpersonaje(struct perso* jugador,struct tirador* proyectil1);
-    void acciones(struct perso* jugador,int* inercia,int* agarre,int* nivel,int* lugarportali,int* lugarportalj);
+    void acciones(struct perso* jugador,int* inercia,int* agarre,int* nivel,int* lugarportali,int* lugarportalj,int* puntuacion);
     void dibujabala(struct tirador* proyectil1, ALLEGRO_BITMAP* bala_imagen);
     void diparabala(struct tirador* proyectil1, ALLEGRO_BITMAP* bala_imagen);
     bool enfriamientobala();
@@ -66,8 +66,9 @@
     void ingresarNombre(char* nombre);
     void leerranking(char nombres[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]);
     void dibuja_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES],int* opcion);
-    void reinicia(struct perso* jugador, int* nivelactual, int* nivel);
+    void reinicia(struct perso* jugador, int* nivelactual, int* nivel,int* puntuacion);
     void ordena_ranking(char nombresranking[MAX_JUGADORES][MAX_NOMBRE], int puntos[MAX_JUGADORES]);
+    void dibuja_datos(ALLEGRO_FONT* font ,int* puntuacion,struct perso* jugador);
 
 
     const int SCREEN_WIDTH = 50*30;
@@ -84,7 +85,7 @@
     char mapa1[maxcolumnas][maxfilas];
     int main()
     {
-        int retardo = 0 , retardo_1 = 0;
+        int retardo = 0 , retardo_1 = 0,retardo_2=0;
         int personaje_y = 0; 
         int camara_y = 0; 
         int nivelactual = 1 , nivel = 1;
@@ -93,7 +94,7 @@
         char nombre[50];
         char nombresranking[10][50];
         int puntos[10];
-        int lugarportali=0,lugarportalj=0;
+        int lugarportali=0,lugarportalj=0,puntuacion=0;
 
         al_init();
         al_install_audio();
@@ -176,6 +177,7 @@
                 ALLEGRO_KEYBOARD_STATE keyboard_state;
                 if (opcion == 1) {
                     menu(&opcion);
+                    ordena_ranking(nombresranking, puntos);
                 }
 
                 if (opcion==3)
@@ -201,7 +203,7 @@
                         verificanivel(&nivelactual, &nivel, &jugador, proyectil1,&lugarportali,&lugarportalj);
 
                         
-                        dibujamapa(ladrillo, escalera, trampabmp,font,portal,&p,moneda,&monedacont,llave);
+                        dibujamapa(ladrillo, escalera, trampabmp,font,portal,&p,moneda,&monedacont,llave,&puntuacion);
                         //if (cont==6)
                            /*dibujamoneda; cont=0*/
 
@@ -209,10 +211,11 @@
                         dibujarpersonaje(personajequieto,jugador,&pani,&pcaminader,caminaderecha,&pcaminaizq);
                         //moverCamara(jugador.posy,camara_y);
                         dibujabala(proyectil1,bala);
+                        
                         if (retardo==0)
                         {
                             
-                            acciones(&jugador, &inercia,&agarre,&nivel,&lugarportali,&lugarportalj);
+                            acciones(&jugador, &inercia,&agarre,&nivel,&lugarportali,&lugarportalj,&puntuacion);
                             moverpersonaje(&jugador,proyectil1);
                             
                         // printf("1");
@@ -222,17 +225,24 @@
                         {
                             
                             diparabala(proyectil1,bala);
+                            //dibuja_puntos(font,&puntuacion);
+                            //printf("2");
+                        }
+
+                        if(retardo_2==0)
+                        {
+                            dibuja_datos(font,&puntuacion,&jugador);
                             //printf("2");
                         }
 
                         retardo_1=(retardo_1+1)%3;
-                        
+                        //retardo_2=(retardo_2+1)%6;
                         //retardo=(retardo+1)%2;
                         //al_rest(0.01);
                         
                         al_flip_display(); 
-                    } while (jugador.vidas > 1 && maxniveles>nivel); /* code */
-                    reinicia(&jugador, &nivelactual, &nivel);
+                    } while (jugador.vidas > 0 && maxniveles>nivel); /* code */
+                    reinicia(&jugador, &nivelactual, &nivel,&puntuacion);
                     opcion = 1;
                     printf("\nopcion despues de salir juego %d",opcion);
                 }
@@ -296,10 +306,11 @@ void menu(int* opcion) {
     // Aquí puedes usar el valor de "*opcion" para realizar acciones específicas según la tecla presionada
 }
 
-void reinicia(struct perso* jugador, int* nivelactual, int* nivel) {
-    jugador->vidas = 300;
+void reinicia(struct perso* jugador, int* nivelactual, int* nivel,int* puntuacion) {
+    jugador->vidas = 5;
     *nivelactual = 1;
     *nivel = 1;
+    *puntuacion = 0;
     // Add any other necessary state reset here
 }
 
@@ -340,10 +351,63 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                 proyectil1[z].dibposy = i * 30;
                 for (int b = 0; b < maxbalas; b++) {
                     proyectil1[z].balas[b].activado = 1;
+                    proyectil1[z].balas[b].tipo = 3; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
                     printf("\nestado:%d",proyectil1[z].balas[b].activado);
+                    printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
                 }
                 printf("\nestex : %d", proyectil1[z].dibposx);
                 printf("\nestey : %d", proyectil1[z].dibposy);
+                printf("\nestez : %d", z);
+
+                z++;
+            }
+
+            else if(mapa1[j][i] == 'u') {
+                proyectil1[z].dibposx = j * 30;
+                proyectil1[z].dibposy = i * 30;
+                for (int b = 0; b < maxbalas; b++) {
+                    proyectil1[z].balas[b].activado = 1;
+                    proyectil1[z].balas[b].tipo = 4; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
+                    printf("\nestado:%d",proyectil1[z].balas[b].activado);
+                    printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
+                }
+                printf("\nestex : %d", proyectil1[z].dibposx);
+                printf("\nestey : %d", proyectil1[z].dibposy);
+                
+                printf("\nestez : %d", z);
+
+                z++;
+            }
+
+            else if(mapa1[j][i] == 'y') {
+                proyectil1[z].dibposx = j * 30;
+                proyectil1[z].dibposy = i * 30;
+                for (int b = 0; b < maxbalas; b++) {
+                    proyectil1[z].balas[b].activado = 1;
+                    proyectil1[z].balas[b].tipo = 2; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
+                    printf("\nestado:%d",proyectil1[z].balas[b].activado);
+                    printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
+                }
+                printf("\nestex : %d", proyectil1[z].dibposx);
+                printf("\nestey : %d", proyectil1[z].dibposy);
+                
+                printf("\nestez : %d", z);
+
+                z++;
+            }
+
+            else if(mapa1[j][i] == 'i') {
+                proyectil1[z].dibposx = j * 30;
+                proyectil1[z].dibposy = i * 30;
+                for (int b = 0; b < maxbalas; b++) {
+                    proyectil1[z].balas[b].activado = 1;
+                    proyectil1[z].balas[b].tipo = 1; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
+                    printf("\nestado:%d",proyectil1[z].balas[b].activado);
+                    printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
+                }
+                printf("\nestex : %d", proyectil1[z].dibposx);
+                printf("\nestey : %d", proyectil1[z].dibposy);
+                
                 printf("\nestez : %d", z);
 
                 z++;
@@ -367,7 +431,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
 
 
 
-    void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave)//, , int vidas, int puntaje
+    void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave,int* puntuacion)//, , int vidas, int puntaje
     {
         int i, j;
         for (i= 0; i < maxcolumnas; i++) {
@@ -379,8 +443,21 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                     al_draw_bitmap(escalera, j * 30, i * 30, 0);
                 }
                 else if (mapa1[j][i] == 't') {
-                    al_draw_bitmap(trampabmp, j * 30, i * 30, 0);
+                    al_draw_bitmap_region(trampabmp,0,0,30,30,j*30,i*30,0);
                 }
+                else if (mapa1[j][i] == 'u') {
+                    al_draw_bitmap_region(trampabmp,1*30,0,30,30,j*30,i*30,0);
+                }
+
+                else if (mapa1[j][i] == 'y') {
+                    al_draw_bitmap_region(trampabmp,2*30,0,30,30,j*30,i*30,0);
+                }
+
+                else if (mapa1[j][i] == 'i') {
+                    al_draw_bitmap_region(trampabmp,3*30,0,30,30,j*30,i*30,0);
+                }
+
+
                 else if (mapa1[j][i] == 'n') {
                     al_draw_bitmap_region(portal,(*p)*30,0,30,30,j*30,i*30,0);
                     (*p)++;
@@ -403,8 +480,11 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                 else if (mapa1[j][i] == 'l') {
                     al_draw_bitmap(llave, j * 30, i * 30, 0);
                 }
+
                 
-            //   al_draw_text(font, al_map_rgb(255, 255, 255), 400, 300, ALLEGRO_ALIGN_CENTER, "¡Hola, mundo!");
+                
+              
+
                 
                 
             }
@@ -412,6 +492,13 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
 
     // al_draw_textf(font, al_map_rgb(255, 0, 0), 10, 10, 0, "VIDAS: %d", vidas);
     //   al_draw_textf(font, al_map_rgb(255, 0, 0), 10, 30, 0, "PUNTAJE: %d", puntaje);
+    }
+
+
+    void dibuja_datos(ALLEGRO_FONT* font ,int* puntuacion,struct perso* jugador){
+
+        al_draw_textf(font, al_map_rgb(0, 0, 0), 15, 5, 0, "puntuacion : %d", *puntuacion);
+        al_draw_textf(font, al_map_rgb(0, 0, 0), 15, 15, 0, "vidas : %d", jugador->vidas);
     }
 
     void dibujarpersonaje(ALLEGRO_BITMAP* personajequieto, struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha,int* pcaminaizq) {
@@ -517,7 +604,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         }
 
 
-    void acciones(struct perso* jugador, int* inercia, int* agarre , int* nivel,int* lugarportali,int* lugarportalj) {
+    void acciones(struct perso* jugador, int* inercia, int* agarre , int* nivel,int* lugarportali,int* lugarportalj,int* puntuacion) {
         ALLEGRO_KEYBOARD_STATE keyboard_state;
         al_get_keyboard_state(&keyboard_state);
         int direccion = 3;
@@ -636,6 +723,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
 
         if (mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] == 'm'){
             mapa1[(jugador->posx / 30)][((jugador->posy) / 30)]='o'; 
+            *puntuacion = *puntuacion + (jugador->vidas*20);
         }
         
 
@@ -663,12 +751,57 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                      if(enfriamientobala() == true){
                     proyectil1[i].balas[j].activado = 0;
                     //printf("\nprueba:j%d estado%d", j, proyectil[i].activado[j]);
-                    proyectil1[i].balas[j].posx = proyectil1[i].dibposx;
-                    proyectil1[i].balas[j].posy = proyectil1[i].dibposy - 30;
+                     // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
+                    if (proyectil1[i].balas[j].tipo == 3)
+                    {
+                        proyectil1[i].balas[j].posx = proyectil1[i].dibposx;
+                        proyectil1[i].balas[j].posy = proyectil1[i].dibposy - 30;
+                    }
+
+                    if (proyectil1[i].balas[j].tipo == 4)
+                    {
+                        proyectil1[i].balas[j].posx = proyectil1[i].dibposx;
+                        proyectil1[i].balas[j].posy = proyectil1[i].dibposy + 30;
+                    }
+
+                    if (proyectil1[i].balas[j].tipo == 1)
+                    {
+                        proyectil1[i].balas[j].posx = proyectil1[i].dibposx+30;
+                        proyectil1[i].balas[j].posy = proyectil1[i].dibposy ;
+                    }
+
+                    if (proyectil1[i].balas[j].tipo == 2)
+                    {
+                        proyectil1[i].balas[j].posx = proyectil1[i].dibposx-30;
+                        proyectil1[i].balas[j].posy = proyectil1[i].dibposy;
+                    }
+                    
+                    
                     }
                 } else {
+                    // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
+                    if (proyectil1[i].balas[j].tipo == 3)
+                    {
+                        proyectil1[i].balas[j].posy -= 1;
+                    }
+
+                    if (proyectil1[i].balas[j].tipo == 4)
+                    {
+                        proyectil1[i].balas[j].posy += 1;
+                    }
+                    if (proyectil1[i].balas[j].tipo == 1)
+                    {
+                        proyectil1[i].balas[j].posx += 1;
+                    }
+
+                    if (proyectil1[i].balas[j].tipo == 2)
+                    {
+                        proyectil1[i].balas[j].posx -= 1;
+                    }
                     
-                    proyectil1[i].balas[j].posy -= 1;
+                    
+
+
                     //printf("\nposicioni:%d,pos%d",j, proyectil[i].posy[j]);
 
                     // Verificar si hay una 'x' en los próximos 30 píxeles en la dirección de avance
@@ -718,25 +851,19 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         int colisionAdicional = 4;
 
         // Coordenadas del rectángulo que representa al jugador
-        int jugador_x1 = jugador->posx + colisionAdicional;
-        int jugador_x2 = jugador->posx + 30 - colisionAdicional;
-        int jugador_y1 = jugador->posy + colisionAdicional;
-        int jugador_y2 = jugador->posy + 30 - colisionAdicional;
+        
 
         // Iteramos sobre las balas y comprobamos si alguna colisiona con el jugador
         for (int i = 0; i < maxtiradores; i++) {
             for (int j = 0; j < maxbalas; j++) {
                 if (proyectil1[i].balas[j].activado == 0) {
                     // Coordenadas del rectángulo que representa a la bala
-                    int bala_x1 = proyectil1[i].balas[j].posx + colisionAdicional;
-                    int bala_x2 = proyectil1[i].balas[j].posx + 30 - colisionAdicional;
-                    int bala_y1 = proyectil1[i].balas[j].posx + colisionAdicional;
-                    int bala_y2 = proyectil1[i].balas[j].posx + 30 - colisionAdicional;
+                    
 
                     // Comprobamos si hay intersección entre los rectángulos (colisión)
-                    if (jugador_x1 < bala_x2 && jugador_x2 > bala_x1 && jugador_y1 < bala_y2 && jugador_y2 > bala_y1) {
+                    if (jugador->posx == proyectil1[i].balas[j].posx && jugador->posy == proyectil1[i].balas[j].posy || jugador->posx + 30 == proyectil1[i].balas[j].posx+15 && jugador->posy == proyectil1[i].balas[j].posy) {
                         jugador->vidas--;
-                        proyectil1[i].balas[j].posy=1;
+                        proyectil1[i].balas[j].activado=1;
                         return true; // Colisión detectada
                     }
                 }
