@@ -1,4 +1,4 @@
-diego 2000
+H 2000
 pedro 1100
 sergio 1020
 juan 1000
@@ -7,4 +7,4 @@ nicolas 900
 juanes 820
 klast 820
 macaco 820
- 80
+ 1000

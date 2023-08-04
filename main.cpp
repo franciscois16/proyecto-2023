@@ -16,27 +16,13 @@
     #define MAX_JUGADORES 10
     #define MAX_NOMBRE  50
     #define maxsalto  120
-    #define maxenemigos 3
+    #define maxenemigos 5
 
     struct ranking {
         char nombres[MAX_JUGADORES][MAX_NOMBRE];
         int puntos[MAX_JUGADORES];
     };
 
-    struct perso
-    {
-        int posx= 0.0;
-        int posy= 0.0;
-        int estado =1; // 1=quieto,2camina derecha,3camina izquierda,4 salta y 5 se agarra
-        int vidas = 5;
-        int direccion = 0;
-        //int quieto = 0;
-        //int camina = 0;
-        //int salta = 0;
-        //int pared = 0;
-        int puntaje=0;
-        
-    };
 
     struct proyectil {
         
@@ -55,11 +41,26 @@
         struct proyectil balas[maxbalas];
     };
 
+    struct perso
+    {
+        int posx= 0.0;
+        int posy= 0.0;
+        int estado =1; // 1=quieto,2camina derecha,3camina izquierda,4 salta y 5 se agarra
+        int vidas = 5;
+        int direccion = 0;
+        //int quieto = 0;
+        //int camina = 0;
+        //int salta = 0;
+        //int pared = 0;
+        int puntaje=0;
+        struct proyectil balasjug[maxbalas];
+        
+    };
     struct enemigo
     {
         int posx= 0.0;
         int posy= 0.0;
-        int estado =0;
+        int estado ;
         int tipo = 0; // 1 inteligente 2 torpe
         int direccion=0; // 1 derecha 2 izquierda
       
@@ -89,6 +90,10 @@
     void dibuja_enemigo(struct enemigo* malos ,ALLEGRO_BITMAP* esqueletomalo , int* retardo_enemigo,int* enemigocont,int* enemigocont2);
     void mover_enemigos(struct enemigo* malos);
     void colision_enemigo(struct enemigo* malos,struct perso* jugador);
+    void dibuja_bala_jug(struct perso* jugador, ALLEGRO_BITMAP* bala_jugador);
+    void dispararBala(struct perso* jugador);
+    void inicia_balas_jug(struct perso* jugador);
+    void colision_bala_jug(struct perso* jugador);
 
     const int SCREEN_WIDTH = 50*30;
     const int SCREEN_HEIGHT = 30*30;
@@ -96,7 +101,7 @@
 
     int fil,col,inercia = 0;
     int agarre = 0;
-    int bandera=0;
+    int bandera=0,bandera_jug=0;
 
     char mapa1[maxcolumnas][maxfilas];
     int main()
@@ -138,6 +143,7 @@
         ALLEGRO_BITMAP* escalera = al_load_bitmap("imagenes/escalera.png");
         ALLEGRO_BITMAP* trampabmp = al_load_bitmap("imagenes/trampa.png");
         ALLEGRO_BITMAP* bala = al_load_bitmap("imagenes/bala.png");
+        ALLEGRO_BITMAP* bala_jugador = al_load_bitmap("imagenes/balajugador.png");
         ALLEGRO_BITMAP* portal = al_load_bitmap("imagenespersonaje/portal.png");
         //ALLEGRO_SAMPLE *salto = al_load_sample("imagenes/salto.wav");
         ALLEGRO_BITMAP* personajequieto = al_load_bitmap("imagenespersonaje/pquieto.png");
@@ -201,7 +207,7 @@
                 {
                     ingresarNombre(nombre);
                     cargarmapaarchivo(&jugador ,proyectil1,&nivelactual,&lugarportali,&lugarportalj,malos);
-                    
+                    inicia_balas_jug(&jugador);
                    do {
                         
                         al_get_keyboard_state(&keyboard_state);
@@ -224,6 +230,11 @@
                         dibuja_enemigo(malos, maloesqueleto, &retardo_enemigo,&enemigocont,&enemigocont2);
                         mover_enemigos(malos);
                         colision_enemigo(malos,&jugador);
+                        dispararBala(&jugador);
+                        dibuja_bala_jug(&jugador,bala_jugador);
+                        colision_bala_jug(&jugador);
+                        
+                        
                         
                         if (retardo==0)
                         {   
@@ -1079,11 +1090,115 @@ void colision_enemigo(struct enemigo* malos,struct perso* jugador){
                 jugador->vidas--;
                 printf("\nllegaste aqu i este es i %d",i);
             }
+            for (int j = 0; j < maxbalas; j++)
+            {
+               if(((jugador->balasjug[j].posx)/30) == ((malos[i].posx)/30) && ((jugador->balasjug[j].posy)/30) == ((malos[i].posy)/30) && jugador->balasjug[j].activado==0){
+                    malos[i].estado=1;
+                    jugador->balasjug[j].activado=1;
+                } 
+            }
+            
+            
+
+            
         }
     }
     
-    
+}
 
+    bool enfriamientobala_jug() {
+            if (bandera_jug>0)
+            {
+               bandera_jug = bandera_jug - 4; 
+            }
+
+           // printf("\nbandera %d ",bandera);
+            
+            if (bandera_jug == 0)
+            {
+               bandera_jug=600; 
+               return true;
+            }
+            else{
+             return false;
+            }
+    }
+
+void inicia_balas_jug(struct perso* jugador){
+   int i = 0;
+    for(i = 0; i < maxbalas; i++) {
+        jugador->balasjug[i].activado = 1;
+        jugador->balasjug[i].posx = -1;
+        jugador->balasjug[i].posy = -1;
+    }
 
 }
+
+void dispararBala(struct perso* jugador) {
+    for (int i = 0; i < maxbalas; i++) {
+            ALLEGRO_KEYBOARD_STATE keyboard_state;
+            al_get_keyboard_state(&keyboard_state);
+        if (jugador->balasjug[i].activado==1 && al_key_down(&keyboard_state, ALLEGRO_KEY_X) ) {
+            if (enfriamientobala_jug() == true)
+            {
+              // Disparar una bala en la dirección actual del jugador
+                // Puedes ajustar las posiciones iniciales según la dirección del jugador
+                if(al_key_down(&keyboard_state, ALLEGRO_KEY_RIGHT)){
+                    jugador->balasjug[i].posx = jugador->posx; // Puedes ajustar las posiciones iniciales según la dirección del jugador
+                    jugador->balasjug[i].posy = jugador->posy; 
+                    jugador->balasjug[i].tipo = 1;// 1 a la derecha 2 a la izquierda
+                    jugador->balasjug[i].activado = 0; 
+                }
+                else if(al_key_down(&keyboard_state, ALLEGRO_KEY_LEFT)){
+                    jugador->balasjug[i].posx = jugador->posx-30; // Puedes ajustar las posiciones iniciales según la dirección del jugador
+                    jugador->balasjug[i].posy = jugador->posy; 
+                    jugador->balasjug[i].tipo = 2;// 1 a la derecha 2 a la izquierda
+                    jugador->balasjug[i].activado = 0; 
+                }
+                
+                 
+            }
+            
+                
+                
+        }
+        else if(jugador->balasjug[i].activado==0) {
+            if (jugador->balasjug[i].tipo==1)
+            {
+               jugador->balasjug[i].posx += 1;
+            }
+            
+            if (jugador->balasjug[i].tipo==2)
+            {
+               jugador->balasjug[i].posx -= 1;
+            }
+            // printf("\nla pos de la balax %d",jugador->balasjug[i].posx);
+            // printf("\nla pos de la balay %d",jugador->balasjug[i].posy);
+            
+        }
+    }
+}
+
+void dibuja_bala_jug(struct perso* jugador, ALLEGRO_BITMAP* bala_jugador) {
+    int j=0;
+        for (j = 0; j < maxbalas; j++) {
+            if (jugador->balasjug[j].activado == 0) {
+                al_draw_bitmap(bala_jugador, jugador->balasjug[j].posx, jugador->balasjug[j].posy, 0);
+            }
+        }
+    
+}
+
+ void colision_bala_jug(struct perso* jugador){
+    int i=0;
+    int posx,posy;
+    for(i=0;i<maxbalas;i++){
+        // posx=jugador->balasjug[i].posx;
+        // posy=jugador->balasjug[i].posy;
+        if (mapa1[(jugador->balasjug[i].posx) / 30][(jugador->balasjug[i].posy) / 30] == 'x'&& jugador->balasjug[i].activado==0) {
+                    jugador->balasjug[i].activado = 1;
+                }
+    }
+ }
+
 
