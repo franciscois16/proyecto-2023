@@ -12,7 +12,7 @@
     #define paso 1
     #define maxtiradores 4
     #define maxbalas 5
-    #define maxniveles 3
+    #define maxniveles 4
     #define MAX_JUGADORES 10
     #define MAX_NOMBRE  50
     #define maxsalto  120
@@ -151,6 +151,7 @@
         ALLEGRO_BITMAP* moneda = al_load_bitmap("imagenes/moneda.png");
         ALLEGRO_BITMAP* llave = al_load_bitmap("imagenes/llave.png");
         ALLEGRO_BITMAP* maloesqueleto = al_load_bitmap("imagenes/enemigo2.png");
+        ALLEGRO_SAMPLE* temamenu = al_load_sample("imagenes/Phantom.mp3");
 
         al_reserve_samples(1);
 
@@ -193,6 +194,7 @@
 
                 ALLEGRO_KEYBOARD_STATE keyboard_state;
                 if (opcion == 1) {
+                    al_play_sample(temamenu, 0.5, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
                     menu(&opcion);
                     ordena_ranking(&puntajes);
                 }
@@ -256,7 +258,7 @@
                             //printf("2");
                         }
 
-                        //retardo_1=(retardo_1+1)%3;
+                        retardo_1=(retardo_1+1)%3;
                         //retardo_2=(retardo_2+1)%6;
                         //retardo=(retardo+1)%2;
                         //al_rest(0.01);
@@ -339,6 +341,12 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
     if(*nivelactual==2){
         mapa = al_fopen("mapa2.txt", "r");
     }
+
+    if (*nivelactual==3)
+    {
+        mapa = al_fopen("mapa3.txt", "r");
+    }
+    
 
     int i, j, z = 0,y=0;
 
@@ -822,7 +830,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
             
             if (bandera == 0)
             {
-               bandera=2000; 
+               bandera=4000; 
                return true;
             }
             else{
