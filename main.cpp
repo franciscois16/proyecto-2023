@@ -71,14 +71,14 @@
     void cargarmapaarchivo(struct perso* jugador,struct tirador* proyectil1,int* nivelactual,int* lugarportali,int* lugarportalj,struct enemigo* malos);
     void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave,int* puntuacion,int* retardo_moneda);
     void dibujarpersonaje(ALLEGRO_BITMAP* personaje,struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha,int* pcaminaizq,int* retardo_personaje);
-    void moverpersonaje(struct perso* jugador,struct tirador* proyectil1);
-    void acciones(struct perso* jugador,int* inercia,int* agarre,int* nivel,int* lugarportali,int* lugarportalj,int* puntuacion);
+    void moverpersonaje(struct perso* jugador,struct tirador* proyectil1,ALLEGRO_SAMPLE_INSTANCE* instanciadaño);
+    void acciones(struct perso* jugador,int* inercia,int* agarre,int* nivel,int* lugarportali,int* lugarportalj,int* puntuacion,ALLEGRO_SAMPLE_INSTANCE* instanciasalto,ALLEGRO_SAMPLE_INSTANCE* instanciarecoger,ALLEGRO_SAMPLE_INSTANCE* instanciallave);
     void dibujabala(struct tirador* proyectil1, ALLEGRO_BITMAP* bala_imagen);
     void diparabala(struct tirador* proyectil1, ALLEGRO_BITMAP* bala_imagen);
     bool enfriamientobala();
     void verificanivel(int* nivelactual , int* nivel,struct perso* jugador, struct tirador* proyectil1,int* lugarportali,int* lugarportalj,struct enemigo* malos);
     void menu(int* opcion);
-    bool verificarColision(struct perso* jugador, struct tirador* proyectil1);
+    bool verificarColision(struct perso* jugador, struct tirador* proyectil1,ALLEGRO_SAMPLE_INSTANCE* instanciadaño);
     void ingresarNombre(char* nombre);
     void dibuja_ranking(struct ranking* puntajes,int* opcion);
     void reinicia(struct perso* jugador, int* nivelactual, int* nivel,int* puntuacion);
@@ -89,9 +89,9 @@
     void dibujamoneda(ALLEGRO_BITMAP* moneda , int* monedacont);
     void dibuja_enemigo(struct enemigo* malos ,ALLEGRO_BITMAP* esqueletomalo , int* retardo_enemigo,int* enemigocont,int* enemigocont2);
     void mover_enemigos(struct enemigo* malos);
-    void colision_enemigo(struct enemigo* malos,struct perso* jugador);
+    void colision_enemigo(struct enemigo* malos,struct perso* jugador,ALLEGRO_SAMPLE_INSTANCE* instanciadaño);
     void dibuja_bala_jug(struct perso* jugador, ALLEGRO_BITMAP* bala_jugador);
-    void dispararBala(struct perso* jugador);
+    void dispararBala(struct perso* jugador,ALLEGRO_SAMPLE_INSTANCE* instanciadisparo);
     void inicia_balas_jug(struct perso* jugador);
     void colision_bala_jug(struct perso* jugador);
 
@@ -137,6 +137,7 @@
 
         al_start_timer(timer);
         al_init_image_addon();
+        al_reserve_samples(1);
 
         ALLEGRO_BITMAP* imagen = al_load_bitmap("imagenes/fondo.bmp");
         ALLEGRO_BITMAP* ladrillo = al_load_bitmap("imagenes/ladrillo.bmp");
@@ -151,9 +152,37 @@
         ALLEGRO_BITMAP* moneda = al_load_bitmap("imagenes/moneda.png");
         ALLEGRO_BITMAP* llave = al_load_bitmap("imagenes/llave.png");
         ALLEGRO_BITMAP* maloesqueleto = al_load_bitmap("imagenes/enemigo2.png");
-        ALLEGRO_SAMPLE* temamenu = al_load_sample("imagenes/Phantom.mp3");
+        ALLEGRO_SAMPLE* temamenu = al_load_sample("musica/Phantom.mp3");
+        
 
-        al_reserve_samples(1);
+
+        ALLEGRO_SAMPLE* salto = al_load_sample("musica/salta.mp3");
+        ALLEGRO_SAMPLE* disparo = al_load_sample("musica/disparo.mp3");
+        ALLEGRO_SAMPLE* recoger = al_load_sample("musica/efectomoneda.mp3");
+        ALLEGRO_SAMPLE* daño = al_load_sample("musica/daño.mp3");
+        ALLEGRO_SAMPLE* recogellave = al_load_sample("musica/agarrallave.wav");
+
+
+        ALLEGRO_SAMPLE_INSTANCE* instanciasalto = al_create_sample_instance(salto);
+        ALLEGRO_SAMPLE_INSTANCE* instanciadisparo = al_create_sample_instance(disparo);
+        ALLEGRO_SAMPLE_INSTANCE* instanciarecoger = al_create_sample_instance(recoger);
+        ALLEGRO_SAMPLE_INSTANCE* instanciadaño = al_create_sample_instance(daño);
+        ALLEGRO_SAMPLE_INSTANCE* instanciallave = al_create_sample_instance(recogellave);
+
+
+        al_attach_sample_instance_to_mixer(instanciasalto,al_get_default_mixer());
+        al_attach_sample_instance_to_mixer(instanciadisparo,al_get_default_mixer());
+        al_attach_sample_instance_to_mixer(instanciarecoger,al_get_default_mixer());
+        al_attach_sample_instance_to_mixer(instanciadaño,al_get_default_mixer());
+        al_attach_sample_instance_to_mixer(instanciallave,al_get_default_mixer());
+        
+    
+        al_set_sample_instance_gain(instanciasalto, 0.5); // Ajustar el volumen entre 0.0 y 1.0
+        al_set_sample_instance_gain(instanciadisparo, 1.0); // Ajustar el volumen entre 0.0 y 1.0
+        al_set_sample_instance_gain(instanciarecoger, 1.0); // Ajustar el volumen entre 0.0 y 1.0
+
+
+        
 
         if (!imagen) {
             fprintf(stderr, "Error al cargar la imagen.\n");
@@ -231,8 +260,8 @@
                         dibujabala(proyectil1,bala);
                         dibuja_enemigo(malos, maloesqueleto, &retardo_enemigo,&enemigocont,&enemigocont2);
                         mover_enemigos(malos);
-                        colision_enemigo(malos,&jugador);
-                        dispararBala(&jugador);
+                        colision_enemigo(malos,&jugador,instanciadaño);
+                        dispararBala(&jugador,instanciadisparo);
                         dibuja_bala_jug(&jugador,bala_jugador);
                         colision_bala_jug(&jugador);
                         
@@ -240,8 +269,8 @@
                         
                         if (retardo==0)
                         {   
-                            acciones(&jugador, &inercia,&agarre,&nivel,&lugarportali,&lugarportalj,&puntuacion);
-                            moverpersonaje(&jugador,proyectil1);
+                            acciones(&jugador, &inercia,&agarre,&nivel,&lugarportali,&lugarportalj,&puntuacion,instanciasalto,instanciarecoger,instanciallave);
+                            moverpersonaje(&jugador,proyectil1,instanciadaño);
                         // printf("1");
                         }
 
@@ -582,7 +611,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         //al_draw_bitmap(personajequieto, pixelPosX, pixelPosY, 0);
     }
 
-    void moverpersonaje(struct perso* jugador,struct tirador* proyectil1) {
+    void moverpersonaje(struct perso* jugador,struct tirador* proyectil1,ALLEGRO_SAMPLE_INSTANCE* instanciadaño) {
             ALLEGRO_KEYBOARD_STATE keyboard_state;
             al_get_keyboard_state(&keyboard_state);
 
@@ -621,7 +650,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                jugador->estado=1;
             }
 
-            if (verificarColision(jugador, proyectil1)) {
+            if (verificarColision(jugador, proyectil1,instanciadaño)) {
                 // Si hay colisión, realiza alguna acción (por ejemplo, mostrar un mensaje)
                 printf("¡Has sido alcanzado por una bala! vidas %d\n",jugador->vidas);
             }
@@ -630,7 +659,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         }
 
 
-    void acciones(struct perso* jugador, int* inercia, int* agarre , int* nivel,int* lugarportali,int* lugarportalj,int* puntuacion) {
+    void acciones(struct perso* jugador, int* inercia, int* agarre , int* nivel,int* lugarportali,int* lugarportalj,int* puntuacion,ALLEGRO_SAMPLE_INSTANCE* instanciasalto,ALLEGRO_SAMPLE_INSTANCE* instanciarecoger,ALLEGRO_SAMPLE_INSTANCE* instanciallave) {
         ALLEGRO_KEYBOARD_STATE keyboard_state;
         al_get_keyboard_state(&keyboard_state);
         int direccion = 3;
@@ -693,6 +722,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         // Aplicar inercia hacia arriba si se presiona la tecla de espacio y hay agarre en una pared
         if (al_key_down(&keyboard_state, ALLEGRO_KEY_SPACE) && mapa1[jugador->posx / 30][(jugador->posy + 30) / 30] == 'x' && *agarre == 0 || *agarre == 1) {
             *inercia = maxsalto;
+            al_play_sample_instance(instanciasalto);
         //al_play_sample(salto, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
         }
 
@@ -722,6 +752,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
 
         if (mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] == 'l'){
             mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] ='o'; 
+            al_play_sample_instance(instanciallave);
             mapa1[*lugarportalj][*lugarportali]='n';
             printf("portalj%d,portali%d",*lugarportalj,*lugarportali);
         }
@@ -732,6 +763,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         }
 
         if (mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] == 'm'){
+            al_play_sample_instance(instanciarecoger);
             mapa1[(jugador->posx / 30)][((jugador->posy) / 30)]='o'; 
             *puntuacion = *puntuacion + (jugador->vidas*20);
         }
@@ -845,7 +877,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         }
     }
 
-    bool verificarColision(struct perso* jugador, struct tirador* proyectil1) {
+    bool verificarColision(struct perso* jugador, struct tirador* proyectil1,ALLEGRO_SAMPLE_INSTANCE* instanciadaño) {
         // Definimos el tamaño de la zona de colisión adicional (en píxeles)
         int colisionAdicional = 4;
         // Iteramos sobre las balas y comprobamos si alguna colisiona con el jugador
@@ -858,6 +890,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                     // Comprobamos si hay intersección entre los rectángulos (colisión)
                     if (jugador->posx == proyectil1[i].balas[j].posx && jugador->posy == proyectil1[i].balas[j].posy || jugador->posx + 30 == proyectil1[i].balas[j].posx+15 && jugador->posy == proyectil1[i].balas[j].posy) {
                         jugador->vidas--;
+                        al_play_sample_instance(instanciadaño);
                         proyectil1[i].balas[j].activado=1;
                         return true; // Colisión detectada
                     }
@@ -1089,13 +1122,14 @@ void mover_enemigos(struct enemigo* malos){
     }
 }
 
-void colision_enemigo(struct enemigo* malos,struct perso* jugador){
+void colision_enemigo(struct enemigo* malos,struct perso* jugador,ALLEGRO_SAMPLE_INSTANCE* instanciadaño){
     for (int i = 0; i < maxenemigos; i++)
     {
         if(malos[i].estado==0){
             if(((jugador->posx)/30) == ((malos[i].posx)/30) && ((jugador->posy)/30) == ((malos[i].posy)/30)){
                 malos[i].estado=1;
                 jugador->vidas--;
+                al_play_sample_instance(instanciadaño);
                 printf("\nllegaste aqu i este es i %d",i);
             }
             for (int j = 0; j < maxbalas; j++)
@@ -1142,15 +1176,17 @@ void inicia_balas_jug(struct perso* jugador){
 
 }
 
-void dispararBala(struct perso* jugador) {
+void dispararBala(struct perso* jugador,ALLEGRO_SAMPLE_INSTANCE* instanciadisparo) {
     for (int i = 0; i < maxbalas; i++) {
             ALLEGRO_KEYBOARD_STATE keyboard_state;
             al_get_keyboard_state(&keyboard_state);
         if (jugador->balasjug[i].activado==1 && al_key_down(&keyboard_state, ALLEGRO_KEY_X) ) {
             if (enfriamientobala_jug() == true)
             {
+                al_play_sample_instance(instanciadisparo);
               // Disparar una bala en la dirección actual del jugador
                 // Puedes ajustar las posiciones iniciales según la dirección del jugador
+
                 if(al_key_down(&keyboard_state, ALLEGRO_KEY_RIGHT)){
                     jugador->balasjug[i].posx = jugador->posx; // Puedes ajustar las posiciones iniciales según la dirección del jugador
                     jugador->balasjug[i].posy = jugador->posy; 
