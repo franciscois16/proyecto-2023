@@ -58,8 +58,8 @@
     };
     struct enemigo
     {
-        int posx= 0.0;
-        int posy= 0.0;
+        int posx= -100;
+        int posy= -100;
         int estado ;
         int tipo = 0; // 1 inteligente 2 torpe
         int direccion=0; // 1 derecha 2 izquierda
@@ -153,6 +153,7 @@
         ALLEGRO_BITMAP* llave = al_load_bitmap("imagenes/llave.png");
         ALLEGRO_BITMAP* maloesqueleto = al_load_bitmap("imagenes/enemigo2.png");
         ALLEGRO_SAMPLE* temamenu = al_load_sample("musica/Phantom.mp3");
+        ALLEGRO_SAMPLE* nivel1 = al_load_sample("musica/nivel1.mp3");
         
 
 
@@ -162,7 +163,8 @@
         ALLEGRO_SAMPLE* daño = al_load_sample("musica/daño.mp3");
         ALLEGRO_SAMPLE* recogellave = al_load_sample("musica/agarrallave.wav");
 
-
+        ALLEGRO_SAMPLE_INSTANCE* instanciamenu = al_create_sample_instance(temamenu);
+        ALLEGRO_SAMPLE_INSTANCE* instancianivel1 = al_create_sample_instance(nivel1);
         ALLEGRO_SAMPLE_INSTANCE* instanciasalto = al_create_sample_instance(salto);
         ALLEGRO_SAMPLE_INSTANCE* instanciadisparo = al_create_sample_instance(disparo);
         ALLEGRO_SAMPLE_INSTANCE* instanciarecoger = al_create_sample_instance(recoger);
@@ -170,16 +172,22 @@
         ALLEGRO_SAMPLE_INSTANCE* instanciallave = al_create_sample_instance(recogellave);
 
 
+        al_attach_sample_instance_to_mixer(instanciamenu,al_get_default_mixer());
+        al_attach_sample_instance_to_mixer(instancianivel1,al_get_default_mixer());
         al_attach_sample_instance_to_mixer(instanciasalto,al_get_default_mixer());
         al_attach_sample_instance_to_mixer(instanciadisparo,al_get_default_mixer());
         al_attach_sample_instance_to_mixer(instanciarecoger,al_get_default_mixer());
         al_attach_sample_instance_to_mixer(instanciadaño,al_get_default_mixer());
         al_attach_sample_instance_to_mixer(instanciallave,al_get_default_mixer());
         
-    
+        al_set_sample_instance_gain(instanciamenu,0.5);
+        al_set_sample_instance_gain(instancianivel1,0.5);
         al_set_sample_instance_gain(instanciasalto, 0.5); // Ajustar el volumen entre 0.0 y 1.0
         al_set_sample_instance_gain(instanciadisparo, 1.0); // Ajustar el volumen entre 0.0 y 1.0
-        al_set_sample_instance_gain(instanciarecoger, 1.0); // Ajustar el volumen entre 0.0 y 1.0
+        al_set_sample_instance_gain(instanciarecoger, 3.0); // Ajustar el volumen entre 0.0 y 1.0
+
+        al_set_sample_instance_playmode(instanciamenu,ALLEGRO_PLAYMODE_LOOP);
+        al_set_sample_instance_playmode(instancianivel1,ALLEGRO_PLAYMODE_LOOP);
 
 
         
@@ -223,9 +231,12 @@
 
                 ALLEGRO_KEYBOARD_STATE keyboard_state;
                 if (opcion == 1) {
-                    al_play_sample(temamenu, 0.5, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+                    //al_play_sample(temamenu, 0.5, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+                    al_play_sample_instance(instanciamenu);
                     menu(&opcion);
                     ordena_ranking(&puntajes);
+                    
+                    
                 }
 
                 if (opcion==3)
@@ -237,9 +248,14 @@
                 if (opcion==2)
                 {
                     ingresarNombre(nombre);
+                    al_stop_sample_instance(instanciamenu);
                     cargarmapaarchivo(&jugador ,proyectil1,&nivelactual,&lugarportali,&lugarportalj,malos);
                     inicia_balas_jug(&jugador);
                    do {
+                        
+                            al_play_sample_instance(instancianivel1);
+                        
+                        
                         
                         al_get_keyboard_state(&keyboard_state);
 
@@ -287,7 +303,7 @@
                             //printf("2");
                         }
 
-                        retardo_1=(retardo_1+1)%3;
+                        retardo_1=(retardo_1+1)%2;
                         //retardo_2=(retardo_2+1)%6;
                         //retardo=(retardo+1)%2;
                         //al_rest(0.01);
@@ -298,8 +314,9 @@
                     reinicia(&jugador, &nivelactual, &nivel,&puntuacion);
                     opcion = 1;
                     printf("\nopcion despues de salir juego %d",opcion);
+                    
                 }
-
+                    al_stop_sample_instance(instancianivel1);
                 redraw = false;
             }
         }

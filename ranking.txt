@@ -1,10 +1,10 @@
-hector 2000
-pedro 1100
+ 2000
+ 1100
 sergio 1020
+manco 1020
 juan 1000
 emedin 1000
 nicotu 960
 nicolas 900
 juanes 820
-klast 820
-manco 1020
+ 840
