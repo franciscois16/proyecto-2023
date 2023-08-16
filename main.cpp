@@ -84,7 +84,7 @@
     void reinicia(struct perso* jugador, int* nivelactual, int* nivel,int* puntuacion);
     void dibuja_datos(ALLEGRO_FONT* font ,int* puntuacion,struct perso* jugador);
     void leerranking(struct ranking* puntajes);
-    void ordena_ranking(struct ranking* puntajes);
+    void ordena_ranking(struct ranking* puntajes,char* nombre , int puntuacion);
     void reescribirRanking(struct ranking* puntajes, char* nombre, int puntuacion);
     void dibujamoneda(ALLEGRO_BITMAP* moneda , int* monedacont);
     void dibuja_enemigo(struct enemigo* malos ,ALLEGRO_BITMAP* esqueletomalo , int* retardo_enemigo,int* enemigocont,int* enemigocont2);
@@ -140,6 +140,7 @@
         al_reserve_samples(1);
 
         ALLEGRO_BITMAP* imagen = al_load_bitmap("imagenes/fondo.bmp");
+        ALLEGRO_BITMAP* imagen_nivel2 = al_load_bitmap("imagenes/fondo nivel 2.jpg");
         ALLEGRO_BITMAP* ladrillo = al_load_bitmap("imagenes/ladrillo.bmp");
         ALLEGRO_BITMAP* escalera = al_load_bitmap("imagenes/escalera.png");
         ALLEGRO_BITMAP* trampabmp = al_load_bitmap("imagenes/trampa.png");
@@ -215,7 +216,7 @@
         struct enemigo malos[maxenemigos];
         
         leerranking(&puntajes);
-        ordena_ranking(&puntajes);
+        ordena_ranking(&puntajes,nombre,puntuacion);
         
         while (opcion!=4)
         {
@@ -237,8 +238,8 @@
                     //al_play_sample(temamenu, 0.5, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
                     al_play_sample_instance(instanciamenu);
                     menu(&opcion);
-                    ordena_ranking(&puntajes);
-                    reescribirRanking(&puntajes, nombre, puntuacion);
+                    ordena_ranking(&puntajes,nombre,puntuacion);
+                    reinicia(&jugador, &nivelactual, &nivel,&puntuacion);
                     
                     
                 }
@@ -264,11 +265,24 @@
                         al_get_keyboard_state(&keyboard_state);
 
                         if (al_key_down(&keyboard_state, ALLEGRO_KEY_ESCAPE)) {
-                            jugador.vidas=0;
+                            //jugador.vidas=0;
                             puntuacion += 12000;  // Salir del bucle si la tecla 'ESC' está presionada
                         }
+                        if (nivel==1)
+                        {
+                           al_draw_bitmap(imagen, 0, 0, 0); /* code */
+                        }
+                        else if (nivel==2)
+                        {
+                           al_draw_bitmap(imagen_nivel2, 0, 0, 0); /* code */
+                        }
 
-                        al_draw_bitmap(imagen, 0, 0, 0);
+                        else if (nivel==3)
+                        {
+                           al_draw_bitmap(imagen_nivel2, 0, 0, 0); /* code */
+                        }
+                        
+                        
                         verificanivel(&nivelactual, &nivel, &jugador, proyectil1,&lugarportali,&lugarportalj,malos);
 
                         dibujamapa(ladrillo, escalera, trampabmp,font,portal,&p,moneda,&monedacont,llave,&puntuacion,&retardo_moneda,corazon);
@@ -316,6 +330,11 @@
                         al_flip_display();
 
                      
+                        if (maxniveles<nivel)
+                        {
+                           nivel=1;
+                           jugador.vidas=0;
+                        }
                         
                        
                     } while (jugador.vidas > 0 && maxniveles>nivel); 
@@ -325,7 +344,7 @@
                     //reescribirRanking(&puntajes, nombre, puntuacion);
                     printf("rankinh0 %s %d",puntajes.nombres[0],puntajes.puntos[0]);
                     printf("\nrankinh2 %s %d",puntajes.nombres[1],puntajes.puntos[1]);
-                    reinicia(&jugador, &nivelactual, &nivel,&puntuacion);
+                    //reinicia(&jugador, &nivelactual, &nivel,&puntuacion);
                     opcion = 1;
                     printf("\nopcion despues de salir juego %d\n",opcion);
                     
@@ -1083,10 +1102,28 @@ void dibuja_ranking(struct ranking* puntajes, int* opcion) {
 
 
 
-void ordena_ranking(struct ranking* puntajes) {
+void ordena_ranking(struct ranking* puntajes,char* nombre , int puntuacion) {
     int i, j;
     char temp_nombre[MAX_NOMBRE];
     int temp_puntos;
+
+    if (puntuacion > puntajes->puntos[MAX_JUGADORES - 1]) {
+        // Reemplazar el último puntaje y nombre con los del jugador actual
+        strcpy(puntajes->nombres[MAX_JUGADORES - 1], nombre);
+        puntajes->puntos[MAX_JUGADORES - 1] = puntuacion;
+        // Ordenar el ranking nuevamente (opcional, si el ranking no está siempre ordenado)
+        
+        // Reescribir el archivo con el ranking actualizado
+        FILE* archivo = fopen("ranking.txt", "w");
+        if (archivo == NULL) {
+            printf("Error al abrir el archivo de ranking para escritura.\n");
+            return;
+        }
+        for (int i = 0; i < MAX_JUGADORES; i++) {
+            fprintf(archivo, "%s %d\n", puntajes->nombres[i], puntajes->puntos[i]);
+        }
+        fclose(archivo);
+    }
 
     for (i = 0; i < MAX_JUGADORES - 1; i++) {
         for (j = 0; j < MAX_JUGADORES - i - 1; j++) {
