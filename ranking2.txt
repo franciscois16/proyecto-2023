@@ -1,0 +1,10 @@
+pedro   2000
+maria   100
+mario   1000
+julio   4000
+rubio   1230
+antonio 10
+luis    1020
+luisa   1090
+juan    1200
+juana   1000

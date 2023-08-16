@@ -69,7 +69,7 @@
     
 
     void cargarmapaarchivo(struct perso* jugador,struct tirador* proyectil1,int* nivelactual,int* lugarportali,int* lugarportalj,struct enemigo* malos);
-    void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave,int* puntuacion,int* retardo_moneda);
+    void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave,int* puntuacion,int* retardo_moneda,ALLEGRO_BITMAP* corazon);
     void dibujarpersonaje(ALLEGRO_BITMAP* personaje,struct perso jugador,int* pani,int* pcaminader,ALLEGRO_BITMAP* caminaderecha,int* pcaminaizq,int* retardo_personaje);
     void moverpersonaje(struct perso* jugador,struct tirador* proyectil1,ALLEGRO_SAMPLE_INSTANCE* instanciadaño);
     void acciones(struct perso* jugador,int* inercia,int* agarre,int* nivel,int* lugarportali,int* lugarportalj,int* puntuacion,ALLEGRO_SAMPLE_INSTANCE* instanciasalto,ALLEGRO_SAMPLE_INSTANCE* instanciarecoger,ALLEGRO_SAMPLE_INSTANCE* instanciallave);
@@ -152,8 +152,10 @@
         ALLEGRO_BITMAP* moneda = al_load_bitmap("imagenes/moneda.png");
         ALLEGRO_BITMAP* llave = al_load_bitmap("imagenes/llave.png");
         ALLEGRO_BITMAP* maloesqueleto = al_load_bitmap("imagenes/enemigo2.png");
+        ALLEGRO_BITMAP* corazon = al_load_bitmap("imagenes/corazon.png");
         ALLEGRO_SAMPLE* temamenu = al_load_sample("musica/Phantom.mp3");
         ALLEGRO_SAMPLE* nivel1 = al_load_sample("musica/nivel1.mp3");
+        
         
 
 
@@ -184,7 +186,7 @@
         al_set_sample_instance_gain(instancianivel1,0.5);
         al_set_sample_instance_gain(instanciasalto, 0.5); // Ajustar el volumen entre 0.0 y 1.0
         al_set_sample_instance_gain(instanciadisparo, 1.0); // Ajustar el volumen entre 0.0 y 1.0
-        al_set_sample_instance_gain(instanciarecoger, 3.0); // Ajustar el volumen entre 0.0 y 1.0
+        al_set_sample_instance_gain(instanciarecoger, 2.0); // Ajustar el volumen entre 0.0 y 1.0
 
         al_set_sample_instance_playmode(instanciamenu,ALLEGRO_PLAYMODE_LOOP);
         al_set_sample_instance_playmode(instancianivel1,ALLEGRO_PLAYMODE_LOOP);
@@ -220,6 +222,7 @@
             al_start_timer(timer);
             al_wait_for_event(queue, &event);
             al_clear_to_color(al_map_rgb(0, 0, 0));
+           
             //printf("\n%d vidas" , jugador.vidas);
             if (event.type == ALLEGRO_EVENT_TIMER)
                 redraw = true;
@@ -235,6 +238,7 @@
                     al_play_sample_instance(instanciamenu);
                     menu(&opcion);
                     ordena_ranking(&puntajes);
+                    reescribirRanking(&puntajes, nombre, puntuacion);
                     
                     
                 }
@@ -260,13 +264,14 @@
                         al_get_keyboard_state(&keyboard_state);
 
                         if (al_key_down(&keyboard_state, ALLEGRO_KEY_ESCAPE)) {
-                            break;  // Salir del bucle si la tecla 'ESC' está presionada
+                            jugador.vidas=0;
+                            puntuacion += 12000;  // Salir del bucle si la tecla 'ESC' está presionada
                         }
 
                         al_draw_bitmap(imagen, 0, 0, 0);
                         verificanivel(&nivelactual, &nivel, &jugador, proyectil1,&lugarportali,&lugarportalj,malos);
 
-                        dibujamapa(ladrillo, escalera, trampabmp,font,portal,&p,moneda,&monedacont,llave,&puntuacion,&retardo_moneda);
+                        dibujamapa(ladrillo, escalera, trampabmp,font,portal,&p,moneda,&monedacont,llave,&puntuacion,&retardo_moneda,corazon);
                         //if (cont==6)
                            /*dibujamoneda; cont=0*/
 
@@ -303,19 +308,29 @@
                             //printf("2");
                         }
 
-                        retardo_1=(retardo_1+1)%2;
+                        //retardo_1=(retardo_1+1)%2;
                         //retardo_2=(retardo_2+1)%6;
                         //retardo=(retardo+1)%2;
                         //al_rest(0.01);
                         
-                        al_flip_display(); 
-                    } while (jugador.vidas > 0 && maxniveles>nivel); /* code */
-                    reescribirRanking(&puntajes, nombre, puntuacion);
+                        al_flip_display();
+
+                     
+                        
+                       
+                    } while (jugador.vidas > 0 && maxniveles>nivel); 
+                        //  for (int i = 0; i < MAX_JUGADORES; i++) {
+                        //      printf("entes de reescribir %s %d\n", puntajes.nombres[i], puntajes.puntos[i]);
+                        //  }
+                    //reescribirRanking(&puntajes, nombre, puntuacion);
+                    printf("rankinh0 %s %d",puntajes.nombres[0],puntajes.puntos[0]);
+                    printf("\nrankinh2 %s %d",puntajes.nombres[1],puntajes.puntos[1]);
                     reinicia(&jugador, &nivelactual, &nivel,&puntuacion);
                     opcion = 1;
-                    printf("\nopcion despues de salir juego %d",opcion);
+                    printf("\nopcion despues de salir juego %d\n",opcion);
                     
                 }
+                    
                     al_stop_sample_instance(instancianivel1);
                 redraw = false;
             }
@@ -332,6 +347,28 @@
         al_destroy_display(disp);
         al_destroy_timer(timer);
         al_destroy_event_queue(queue);
+        al_destroy_sample_instance(instanciamenu);
+        al_destroy_sample_instance(instancianivel1);
+        al_destroy_sample_instance(instanciasalto);
+        al_destroy_sample_instance(instanciadisparo);
+        al_destroy_sample_instance(instanciarecoger);
+        al_destroy_sample_instance(instanciadaño);
+        al_destroy_sample_instance(instanciallave);
+
+        al_uninstall_keyboard();
+        al_uninstall_audio();
+        al_shutdown_image_addon();
+        al_destroy_bitmap(bala_jugador);
+        al_destroy_bitmap(maloesqueleto);
+        al_destroy_bitmap(llave);
+        al_destroy_bitmap(moneda);
+        al_destroy_bitmap(caminaderecha);
+        al_destroy_bitmap(personajequieto);
+        al_destroy_bitmap(portal);
+        al_destroy_bitmap(trampabmp);
+        al_destroy_bitmap(escalera);
+        al_destroy_bitmap(ladrillo);
+        al_destroy_bitmap(imagen);
         // al_destroy_sample(salto);
 
 
@@ -342,7 +379,7 @@
 
 void menu(int* opcion) {
     ALLEGRO_KEYBOARD_STATE keyboard_state;
-    ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu.png");
+    ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu2.png");
 
     if (!menu) {
         fprintf(stderr, "Error al cargar la imagen del menú.\n");
@@ -418,12 +455,12 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                 for (int b = 0; b < maxbalas; b++) {
                     proyectil1[z].balas[b].activado = 1;
                     proyectil1[z].balas[b].tipo = 3; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
-                    printf("\nestado:%d",proyectil1[z].balas[b].activado);
-                    printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
+                    //printf("\nestado:%d",proyectil1[z].balas[b].activado);
+                    //printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
                 }
-                printf("\nestex : %d", proyectil1[z].dibposx);
-                printf("\nestey : %d", proyectil1[z].dibposy);
-                printf("\nestez : %d", z);
+                //printf("\nestex : %d", proyectil1[z].dibposx);
+                //printf("\nestey : %d", proyectil1[z].dibposy);
+                //printf("\nestez : %d", z);
 
                 z++;
             }
@@ -445,13 +482,13 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                 for (int b = 0; b < maxbalas; b++) {
                     proyectil1[z].balas[b].activado = 1;
                     proyectil1[z].balas[b].tipo = 4; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
-                    printf("\nestado:%d",proyectil1[z].balas[b].activado);
-                    printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
+                    // printf("\nestado:%d",proyectil1[z].balas[b].activado);
+                    // printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
                 }
-                printf("\nestex : %d", proyectil1[z].dibposx);
-                printf("\nestey : %d", proyectil1[z].dibposy);
+                // printf("\nestex : %d", proyectil1[z].dibposx);
+                // printf("\nestey : %d", proyectil1[z].dibposy);
                 
-                printf("\nestez : %d", z);
+                // printf("\nestez : %d", z);
 
                 z++;
             }
@@ -462,13 +499,13 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                 for (int b = 0; b < maxbalas; b++) {
                     proyectil1[z].balas[b].activado = 1;
                     proyectil1[z].balas[b].tipo = 2; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
-                    printf("\nestado:%d",proyectil1[z].balas[b].activado);
-                    printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
-                }
-                printf("\nestex : %d", proyectil1[z].dibposx);
-                printf("\nestey : %d", proyectil1[z].dibposy);
+                //     printf("\nestado:%d",proyectil1[z].balas[b].activado);
+                //     printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
+                 }
+                // printf("\nestex : %d", proyectil1[z].dibposx);
+                // printf("\nestey : %d", proyectil1[z].dibposy);
                 
-                printf("\nestez : %d", z);
+                // printf("\nestez : %d", z);
 
                 z++;
             }
@@ -479,13 +516,13 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                 for (int b = 0; b < maxbalas; b++) {
                     proyectil1[z].balas[b].activado = 1;
                     proyectil1[z].balas[b].tipo = 1; // determina la direccion de la bala 1 a la derecha 2 a la izquierda 3 arriba y 4 abajo 
-                    printf("\nestado:%d",proyectil1[z].balas[b].activado);
-                    printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
+                //     printf("\nestado:%d",proyectil1[z].balas[b].activado);
+                //     printf("\ntipo bala: %d", proyectil1[z].balas[b].tipo);
                 }
-                printf("\nestex : %d", proyectil1[z].dibposx);
-                printf("\nestey : %d", proyectil1[z].dibposy);
+                // printf("\nestex : %d", proyectil1[z].dibposx);
+                // printf("\nestey : %d", proyectil1[z].dibposy);
                 
-                printf("\nestez : %d", z);
+                // printf("\nestez : %d", z);
 
                 z++;
             }
@@ -494,8 +531,8 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
 
                 *lugarportali=i;
                 *lugarportalj=j;
-                printf("\nestei : %d", *lugarportali);
-                printf("\nestej : %d", *lugarportalj);
+                // printf("\nestei : %d", *lugarportali);
+                // printf("\nestej : %d", *lugarportalj);
                 mapa1[j][i]='o';
 
             }
@@ -510,7 +547,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
 
 
 
-    void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave,int* puntuacion,int* retardo_moneda)//, , int vidas, int puntaje
+    void dibujamapa(ALLEGRO_BITMAP* ladrillo, ALLEGRO_BITMAP* escalera, ALLEGRO_BITMAP* trampabmp,ALLEGRO_FONT* font,ALLEGRO_BITMAP* portal,int* p,ALLEGRO_BITMAP* moneda,int* monedacont,ALLEGRO_BITMAP* llave,int* puntuacion,int* retardo_moneda,ALLEGRO_BITMAP* corazon)//, , int vidas, int puntaje
     {
         int i, j;
         for (i= 0; i < maxcolumnas; i++) {
@@ -535,6 +572,12 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
                 else if (mapa1[j][i] == 'i') {
                     al_draw_bitmap_region(trampabmp,3*30,0,30,30,j*30,i*30,0);
                 }
+
+                else if (mapa1[j][i]=='c')
+                {
+                    al_draw_bitmap(corazon,j*30,i*30,0);
+                }
+                
 
 
                 else if (mapa1[j][i] == 'n') {
@@ -771,7 +814,7 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
             mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] ='o'; 
             al_play_sample_instance(instanciallave);
             mapa1[*lugarportalj][*lugarportali]='n';
-            printf("portalj%d,portali%d",*lugarportalj,*lugarportali);
+            //printf("portalj%d,portali%d",*lugarportalj,*lugarportali);
         }
         
         if(mapa1[jugador->posx/30][(jugador->posy)/30] == 'n')
@@ -782,7 +825,13 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         if (mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] == 'm'){
             al_play_sample_instance(instanciarecoger);
             mapa1[(jugador->posx / 30)][((jugador->posy) / 30)]='o'; 
-            *puntuacion = *puntuacion + (jugador->vidas*20);
+            *puntuacion = *puntuacion + (jugador->vidas*50);
+        }
+
+        if (mapa1[(jugador->posx / 30)][((jugador->posy) / 30)] == 'c'){
+            al_play_sample_instance(instanciarecoger);
+            mapa1[(jugador->posx / 30)][((jugador->posy) / 30)]='o'; 
+            jugador->vidas += 1;
         }
         
 
@@ -988,14 +1037,15 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
         while (i < MAX_JUGADORES && fscanf(archivo, "%s %d", nombre, &puntaje) == 2) {
             strcpy(puntajes->nombres[i], nombre);
             puntajes->puntos[i] = puntaje;
+            printf("%s %d\n", puntajes->nombres[i], puntajes->puntos[i]);
             i++;
         }
-        printf("todo leido");
+        printf("todo leido\n");
         fclose(archivo);
     }
 
 
-// Otras funciones y definiciones...
+
 
 void dibuja_ranking(struct ranking* puntajes, int* opcion) {
     // Código para dibujar la pantalla de ranking
@@ -1031,7 +1081,7 @@ void dibuja_ranking(struct ranking* puntajes, int* opcion) {
     }
 }
 
-// Función main y otras funciones...
+
 
 void ordena_ranking(struct ranking* puntajes) {
     int i, j;
@@ -1052,6 +1102,7 @@ void ordena_ranking(struct ranking* puntajes) {
                 strcpy(puntajes->nombres[j + 1], temp_nombre);
             }
         }
+        printf("ordenar %s %d\n", puntajes->nombres[i], puntajes->puntos[i]);
     }
 }
 
@@ -1061,21 +1112,17 @@ void reescribirRanking(struct ranking* puntajes, char* nombre, int puntuacion) {
         // Reemplazar el último puntaje y nombre con los del jugador actual
         strcpy(puntajes->nombres[MAX_JUGADORES - 1], nombre);
         puntajes->puntos[MAX_JUGADORES - 1] = puntuacion;
-
         // Ordenar el ranking nuevamente (opcional, si el ranking no está siempre ordenado)
         
-
         // Reescribir el archivo con el ranking actualizado
         FILE* archivo = fopen("ranking.txt", "w");
         if (archivo == NULL) {
             printf("Error al abrir el archivo de ranking para escritura.\n");
             return;
         }
-
         for (int i = 0; i < MAX_JUGADORES; i++) {
             fprintf(archivo, "%s %d\n", puntajes->nombres[i], puntajes->puntos[i]);
         }
-
         fclose(archivo);
     }
 }
@@ -1147,7 +1194,7 @@ void colision_enemigo(struct enemigo* malos,struct perso* jugador,ALLEGRO_SAMPLE
                 malos[i].estado=1;
                 jugador->vidas--;
                 al_play_sample_instance(instanciadaño);
-                printf("\nllegaste aqu i este es i %d",i);
+                //printf("\nllegaste aqu i este es i %d",i);
             }
             for (int j = 0; j < maxbalas; j++)
             {
