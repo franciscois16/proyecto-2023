@@ -12,7 +12,7 @@
     #define paso 1
     #define maxtiradores 4
     #define maxbalas 5
-    #define maxniveles 4
+    #define maxniveles 5
     #define MAX_JUGADORES 10
     #define MAX_NOMBRE  50
     #define maxsalto  120
@@ -141,12 +141,13 @@
 
         ALLEGRO_BITMAP* imagen = al_load_bitmap("imagenes/fondo.bmp");
         ALLEGRO_BITMAP* imagen_nivel2 = al_load_bitmap("imagenes/fondo nivel 2.jpg");
+        ALLEGRO_BITMAP* imagen_nivel3 = al_load_bitmap("imagenes/fondo nivel 3.jpg");
         ALLEGRO_BITMAP* ladrillo = al_load_bitmap("imagenes/ladrillo.bmp");
         ALLEGRO_BITMAP* escalera = al_load_bitmap("imagenes/escalera.png");
         ALLEGRO_BITMAP* trampabmp = al_load_bitmap("imagenes/trampa.png");
         ALLEGRO_BITMAP* bala = al_load_bitmap("imagenes/bala.png");
         ALLEGRO_BITMAP* bala_jugador = al_load_bitmap("imagenes/balajugador.png");
-        ALLEGRO_BITMAP* portal = al_load_bitmap("imagenespersonaje/portal.png");
+        ALLEGRO_BITMAP* portal = al_load_bitmap("imagenespersonaje/portal - copia.png");
         //ALLEGRO_SAMPLE *salto = al_load_sample("imagenes/salto.wav");
         ALLEGRO_BITMAP* personajequieto = al_load_bitmap("imagenespersonaje/pquieto.png");
         ALLEGRO_BITMAP* caminaderecha = al_load_bitmap("imagenespersonaje/pcaminaderecha.png");
@@ -264,9 +265,15 @@
                         
                         al_get_keyboard_state(&keyboard_state);
 
-                        if (al_key_down(&keyboard_state, ALLEGRO_KEY_ESCAPE)) {
+                        if (al_key_down(&keyboard_state, ALLEGRO_KEY_3)) {
                             //jugador.vidas=0;
-                            puntuacion += 12000;  // Salir del bucle si la tecla 'ESC' está presionada
+                            // puntuacion += 12000; // Salir del bucle si la tecla 'ESC' está presionada
+                            nivel = 3;
+                        }
+                        if (al_key_down(&keyboard_state, ALLEGRO_KEY_4)) {
+                            //jugador.vidas=0;
+                            // puntuacion += 12000; // Salir del bucle si la tecla 'ESC' está presionada
+                            nivel = 4;
                         }
                         if (nivel==1)
                         {
@@ -278,6 +285,16 @@
                         }
 
                         else if (nivel==3)
+                        {
+                           al_draw_bitmap(imagen_nivel3, 0, 0, 0); /* code */
+                        }
+
+                         else if (nivel==4)
+                        {
+                           al_draw_bitmap(imagen_nivel2, 0, 0, 0); /* code */
+                        }
+
+                        else if (nivel==5)
                         {
                            al_draw_bitmap(imagen_nivel2, 0, 0, 0); /* code */
                         }
@@ -447,6 +464,11 @@ void cargarmapaarchivo(struct perso* jugador, struct tirador* proyectil1,int* ni
     if (*nivelactual==3)
     {
         mapa = al_fopen("mapa3.txt", "r");
+    }
+
+    if (*nivelactual==4)
+    {
+        mapa = al_fopen("mapa4.txt", "r");
     }
     
 
