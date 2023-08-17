@@ -142,6 +142,7 @@
         ALLEGRO_BITMAP* imagen = al_load_bitmap("imagenes/fondo.bmp");
         ALLEGRO_BITMAP* imagen_nivel2 = al_load_bitmap("imagenes/fondo nivel 2.jpg");
         ALLEGRO_BITMAP* imagen_nivel3 = al_load_bitmap("imagenes/fondo nivel 3.jpg");
+        ALLEGRO_BITMAP* imagen_nivel4 = al_load_bitmap("imagenes/fondo nivel 4.jpg");
         ALLEGRO_BITMAP* ladrillo = al_load_bitmap("imagenes/ladrillo.bmp");
         ALLEGRO_BITMAP* escalera = al_load_bitmap("imagenes/escalera.png");
         ALLEGRO_BITMAP* trampabmp = al_load_bitmap("imagenes/trampa.png");
@@ -291,7 +292,7 @@
 
                          else if (nivel==4)
                         {
-                           al_draw_bitmap(imagen_nivel2, 0, 0, 0); /* code */
+                           al_draw_bitmap(imagen_nivel4, 0, 0, 0); /* code */
                         }
 
                         else if (nivel==5)
